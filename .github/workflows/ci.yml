@@ -14,6 +14,9 @@ jobs:
       with:
         submodules: true
 
+    - name: Bootstrap
+      run: make bootstrap
+
     - uses: swift-actions/setup-swift@v1
       with:
         swift-version: "5.9"

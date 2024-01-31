@@ -41,8 +41,8 @@ let package = Package(
                 .product(name: "SwiftTestReporter", package: "swift-junit"),
             ],
             resources: [
-                .copy("test-vectors/"),
                 .copy("Resources/did"),
+                .copy("web5-spec/test-vectors"),
             ]
         ),
     ]
