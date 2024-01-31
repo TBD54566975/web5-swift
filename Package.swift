@@ -41,10 +41,7 @@ let package = Package(
                 .product(name: "SwiftTestReporter", package: "swift-junit"),
             ],
             resources: [
-                .copy("Resources/crypto_ed25519"),
-                .copy("Resources/crypto_es256k"),
-                .copy("Resources/did_jwk"),
-                .copy("Resources/did_web"),
+                .copy("test-vectors/"),
                 .copy("Resources/did"),
             ]
         ),
