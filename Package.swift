@@ -11,7 +11,7 @@ let package = Package(
         .library(
             name: "Web5",
             targets: ["Web5"]
-        ),
+        )
     ],
     dependencies: [
         .package(url: "https://github.com/GigaBitcoin/secp256k1.swift.git", from: "0.16.0"),
@@ -45,6 +45,6 @@ let package = Package(
                 .copy("Resources/did_web"),
                 .copy("Resources/did"),
             ]
-        )
+        ),
     ]
 )

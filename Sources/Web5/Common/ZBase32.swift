@@ -30,7 +30,7 @@ public enum ZBase32 {
         if data.isEmpty {
             return ""
         }
-        
+
         var result = ""
         var buffer = 0
         var bufferLength = 0

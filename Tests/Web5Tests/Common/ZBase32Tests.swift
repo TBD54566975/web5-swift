@@ -3,7 +3,7 @@ import XCTest
 @testable import Web5
 
 final class ZBase32Tests: XCTestCase {
-    
+
     // TODO: Make these real web5 test vectors
     let vectors: [(encoded: String, decoded: Data)] = [
         (
