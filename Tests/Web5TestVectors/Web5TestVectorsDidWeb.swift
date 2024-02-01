@@ -30,7 +30,7 @@ final class Web5TestVectorsDidWeb: XCTestCase {
 
         let testVector = try TestVector<Input, DIDResolutionResult>(
             fileName: "resolve",
-            subdirectory: "did_web"
+            subdirectory: "test-vectors/did_web"
         )
 
         testVector.run { vector in

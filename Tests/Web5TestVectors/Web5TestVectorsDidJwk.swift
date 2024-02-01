@@ -8,7 +8,7 @@ final class Web5TestVectorsDidJwk: XCTestCase {
     func test_resolve() throws {
         let testVector = try TestVector<String, DIDResolutionResult>(
             fileName: "resolve",
-            subdirectory: "did_jwk"
+            subdirectory: "test-vectors/did_jwk"
         )
 
         testVector.run { vector in

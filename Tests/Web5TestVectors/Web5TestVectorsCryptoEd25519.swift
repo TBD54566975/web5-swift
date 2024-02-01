@@ -14,7 +14,7 @@ final class Web5TestVectorsCryptoEd25519: XCTestCase {
 
         let testVector = try TestVector<Input, String>(
             fileName: "sign",
-            subdirectory: "crypto_ed25519"
+            subdirectory: "test-vectors/crypto_ed25519"
         )
 
         testVector.run { vector in
@@ -66,7 +66,7 @@ final class Web5TestVectorsCryptoEd25519: XCTestCase {
 
         let testVector = try TestVector<Input, Bool>(
             fileName: "verify",
-            subdirectory: "crypto_ed25519"
+            subdirectory: "test-vectors/crypto_ed25519"
         )
 
         testVector.run { vector in

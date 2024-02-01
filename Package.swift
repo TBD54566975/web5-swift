@@ -18,6 +18,7 @@ let package = Package(
         .package(url: "https://github.com/swift-extras/swift-extras-base64.git", from: "0.7.0"),
         .package(url: "https://github.com/pointfreeco/swift-custom-dump.git", from: "1.1.2"),
         .package(url: "https://github.com/WeTransfer/Mocker.git", .upToNextMajor(from: "3.0.1")),
+        .package(url: "https://github.com/allegro/swift-junit.git", from: "2.1.0")
     ],
     targets: [
         .target(
@@ -37,13 +38,11 @@ let package = Package(
                 "Web5",
                 .product(name: "CustomDump", package: "swift-custom-dump"),
                 .product(name: "Mocker", package: "Mocker"),
+                .product(name: "SwiftTestReporter", package: "swift-junit"),
             ],
             resources: [
-                .copy("Resources/crypto_ed25519"),
-                .copy("Resources/crypto_es256k"),
-                .copy("Resources/did_jwk"),
-                .copy("Resources/did_web"),
                 .copy("Resources/did"),
+                .copy("web5-spec/test-vectors"),
             ]
         ),
     ]
