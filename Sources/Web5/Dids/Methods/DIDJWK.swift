@@ -1,11 +1,44 @@
 import Foundation
 
-/// Collection of functions that implement the `did:jwk` method
-public enum DIDJWK {
+/// `did:jwk` DID Method
+public enum DIDJWK: DIDMethod {
 
     public static let methodName = "jwk"
+}
 
-    /// Options that can be provided to customize how a DIDJWK is created
+// MARK: - DIDMethodResolver
+
+extension DIDJWK: DIDMethodResolver {
+
+    /// Resolves a `did:jwk` URI into a `DIDResolutionResult`
+    /// - Parameters:
+    ///   - didURI: The DID URI to resolve
+    ///   - options: The options to use when resolving the DID URI
+    /// - Returns: `DIDResolution.Result` containing the resolved DID Document
+    public static func resolve(
+        didURI: String,
+        options: DIDMethodResolutionOptions? = nil
+    ) async -> DIDResolutionResult {
+        guard let did = try? DID(didURI: didURI),
+            let jwk = try? JSONDecoder().decode(Jwk.self, from: try did.identifier.decodeBase64Url())
+        else {
+            return DIDResolutionResult(error: .invalidDID)
+        }
+
+        guard did.methodName == self.methodName else {
+            return DIDResolutionResult(error: .methodNotSupported)
+        }
+
+        let didDocument = didDocument(did: did, publicKey: jwk)
+        return DIDResolutionResult(didDocument: didDocument)
+    }
+}
+
+// MARK: - DIDMethodCreator
+
+extension DIDJWK: DIDMethodCreator {
+
+    /// Options that can be provided to customize how a `did:jwk` is created
     public struct CreateOptions {
 
         /// The algorithm to use when creating the backing key for the DID
@@ -22,7 +55,8 @@ public enum DIDJWK {
         }
     }
 
-    /// Create a new DIDJWK
+    /// Create a new `BearerDID` using the `did:jwk` method
+    ///
     /// - Parameters:
     ///   - keyManager: `KeyManager` used to generate and store the keys associated to the DID
     ///   - options: Options configuring how the DIDJWK is created. Uses default if not specified.
@@ -50,11 +84,12 @@ public enum DIDJWK {
     /// to sign and verify data
     ///
     /// - Parameters:
-    ///   - portableDID: The `PortableDID` to import
     ///   - keyManager: `KeyManager` to place the imported private keys. Defaults to `InMemoryKeyManager`
+    ///   - portableDID: `PortableDID` to import into a `BearerDID`
+    /// - Returns: `BearerDID` that represents the imported DIDJWK
     public static func `import`(
-        portableDID: PortableDID,
-        keyManager: KeyManager = InMemoryKeyManager()
+        keyManager: KeyManager = InMemoryKeyManager(),
+        portableDID: PortableDID
     ) throws -> BearerDID {
         let did = try DID(didURI: portableDID.uri)
         guard did.methodName == methodName else {
@@ -77,26 +112,6 @@ public enum DIDJWK {
             keyManager: keyManager
         )
     }
-
-    /// Resolves a `did:jwk` URI into a `DIDResolutionResult`
-    /// - Parameter didURI: The DID URI to resolve
-    /// - Returns: `DIDResolution.Result` containing the resolved DID Document.
-    public static func resolve(didURI: String) async -> DIDResolutionResult {
-        guard let did = try? DID(didURI: didURI),
-            let jwk = try? JSONDecoder().decode(Jwk.self, from: try did.identifier.decodeBase64Url())
-        else {
-            return DIDResolutionResult(error: .invalidDID)
-        }
-
-        guard did.methodName == self.methodName else {
-            return DIDResolutionResult(error: .methodNotSupported)
-        }
-
-        let didDocument = didDocument(did: did, publicKey: jwk)
-        return DIDResolutionResult(didDocument: didDocument)
-    }
-
-    // MARK: - Private
 
     private static func didDocument(
         did: DID,
