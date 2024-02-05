@@ -15,7 +15,7 @@ final class BearerDIDTests: XCTestCase {
         XCTAssertNil(portableDID.metadata)
     }
 
-    func test_signAndVerify() throws {
+    func test_getSigner() throws {
         let payload = "Hello, world!".data(using: .utf8)!
 
         let didJWK = try DIDJWK.create(keyManager: InMemoryKeyManager())
@@ -25,5 +25,23 @@ final class BearerDIDTests: XCTestCase {
         let isValid = try signer.verify(payload: payload, signature: signature)
 
         XCTAssertTrue(isValid)
+    }
+
+    func test_getSigner_verificationMethodID() throws {
+        let payload = "Hello, world!".data(using: .utf8)!
+
+        let didJWK = try DIDJWK.create(keyManager: InMemoryKeyManager())
+        let verificationMethodID = try XCTUnwrap(didJWK.document.verificationMethod?.first?.id)
+
+        let signer = try didJWK.getSigner(verificationMethodID: verificationMethodID)
+        let signature = try signer.sign(payload: payload)
+        let isValid = try signer.verify(payload: payload, signature: signature)
+
+        XCTAssertTrue(isValid)
+    }
+
+    func test_getSigner_invalidVerificationMethodID() throws {
+        let didJWK = try DIDJWK.create(keyManager: InMemoryKeyManager())
+        XCTAssertThrowsError(try didJWK.getSigner(verificationMethodID: "not-real"))
     }
 }
