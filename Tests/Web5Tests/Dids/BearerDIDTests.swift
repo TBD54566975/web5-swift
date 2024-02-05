@@ -1,22 +1,17 @@
+import CustomDump
 import XCTest
 
 @testable import Web5
 
 final class BearerDIDTests: XCTestCase {
 
-    func test_toKeys() async throws {
+    func test_export() async throws {
         let didJWK = try DIDJWK.create(keyManager: InMemoryKeyManager())
-        let portableDID = try await didJWK.toPortableDID()
+        let portableDID = try await didJWK.export()
 
-        XCTAssertEqual(portableDID.uri, didJWK.uri)
-        XCTAssertEqual(portableDID.verificationMethods.count, 1)
+        XCTAssertNoDifference(portableDID.uri, didJWK.uri)
+        XCTAssertNoDifference(portableDID.document, didJWK.document)
+        XCTAssertNoDifference(portableDID.privateKeys.count, 1)
+        XCTAssertNil(portableDID.metadata)
     }
-
-    func test_initializeWithKeys() async throws {
-        let didJWK = try DIDJWK.create(keyManager: InMemoryKeyManager())
-        let portableDID = try await didJWK.toPortableDID()
-
-        XCTAssertNoThrow(try BearerDID(portableDID: portableDID))
-    }
-
 }

@@ -1,3 +1,4 @@
+import CustomDump
 import XCTest
 
 @testable import Web5
@@ -71,6 +72,21 @@ final class DIDJWKTests: XCTestCase {
         XCTAssertEqual(resolutionResult.didDocument?.capabilityDelegation?.first, .referenced("\(didURI)#0"))
         XCTAssertEqual(resolutionResult.didDocument?.capabilityInvocation?.first, .referenced("\(didURI)#0"))
         XCTAssertNil(resolutionResult.didResolutionMetadata.error)
+    }
+
+    func test_import() throws {
+        let keyManager = InMemoryKeyManager()
+        let bearerDID = try DIDJWK.create(keyManager: keyManager)
+        let portableDID = try bearerDID.export()
+
+        let importedBearerDID = try DIDJWK.import(
+            portableDID: portableDID,
+            keyManager: keyManager
+        )
+
+        XCTAssertNoDifference(importedBearerDID.did, bearerDID.did)
+        XCTAssertNoDifference(importedBearerDID.document, bearerDID.document)
+        XCTAssertNoDifference(importedBearerDID.metadata, importedBearerDID.metadata)
     }
 
 }
