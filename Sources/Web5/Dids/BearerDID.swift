@@ -45,6 +45,35 @@ public struct BearerDID {
         return did[keyPath: member]
     }
 
+    /// Returns a `BearerDIDSigner` that can be used to sign messages, credentials, or arbitrary data
+    ///
+    /// If given, the `verificationMethodID` parameter is used to select a key from the
+    /// verification methods present in the `DIDDocument`. If `verificationMethodID` is not
+    /// provided, the first verificationMethod in the `DIDDocument` will be used.
+    ///
+    /// - Parameters:
+    ///   - keyAlias: Alias of the key that will be used for
+    public func getSigner(verificationMethodID: String? = nil) throws -> BearerDIDSigner {
+        let verificationMethod: VerificationMethod?
+        
+        if let verificationMethodID {
+            verificationMethod = document.verificationMethod?.first { $0.id == verificationMethodID }
+        } else {
+            verificationMethod = document.verificationMethod?.first
+        }
+
+        guard let verificationMethod else {
+            throw Error.getSignerError("No verificationMethod found")
+        }
+
+        guard let publicKey = verificationMethod.publicKeyJwk else {
+            throw Error.getSignerError("VerificationMethod \(verificationMethod.id) does not contain a publicKeyJwk")
+        }
+
+        let keyAlias = try keyManager.getDeterministicAlias(key: publicKey)
+        return BearerDIDSigner(keyAlias: keyAlias, keyManager: keyManager)
+    }
+
     /// Exports the `BearerDID` into a portable format that contains the DID's URI in addition
     /// to every private key associated with a verifification method.
     public func export() throws -> PortableDID {
@@ -84,6 +113,7 @@ extension BearerDID {
     public enum Error: LocalizedError {
         case keyManagerNotExporter(KeyManager)
         case keyManagerNotImporter(KeyManager)
+        case getSignerError(String)
         case exportError(String)
 
         public var errorDescription: String? {
@@ -92,9 +122,30 @@ extension BearerDID {
                 return "\(String(describing: type(of: keyManager))) does not support exporting keys"
             case let .keyManagerNotImporter(keyManager):
                 return "\(String(describing: type(of: keyManager))) does not support importing keys"
-            case let .exportError(error):
-                return "Export error: \(error)"
+            case let .getSignerError(reason):
+                return "Error getting signer: \(reason)"
+            case let .exportError(reason):
+                return "Error exporting: \(reason)"
             }
         }
+    }
+}
+
+// MARK: - BearerDIDSigner
+
+public struct BearerDIDSigner {
+
+    let keyAlias: String
+    let keyManager: KeyManager
+
+    public func sign<P>(payload: P) throws -> Data
+    where P: DataProtocol {
+        return try self.keyManager.sign(keyAlias: keyAlias, payload: payload)
+    }
+    
+    public func verify<P, S>(payload: P, signature: S) throws -> Bool
+    where P: DataProtocol, S: DataProtocol {
+        let publicKey = try keyManager.getPublicKey(keyAlias: keyAlias)
+        return try Crypto.verify(payload: payload, signature: signature, publicKey: publicKey)
     }
 }
