@@ -13,11 +13,9 @@ extension DIDIon: DIDMethodResolver {
     /// Resolves a `did:ion` URI into a `DIDResolutionResult`
     /// - Parameters:
     ///   - didURI: The DID URI to resolve
-    ///   - options: The options to use when resolving the DID URI
     /// - Returns: `DIDResolutionResult` containing the resolved DID Document.
     public static func resolve(
-        didURI: String,
-        options: DIDMethodResolutionOptions? = nil
+        didURI: String
     ) async -> DIDResolutionResult {
         guard let did = try? DID(didURI: didURI) else {
             return DIDResolutionResult(error: .invalidDID)

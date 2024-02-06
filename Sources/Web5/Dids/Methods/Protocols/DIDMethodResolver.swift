@@ -7,16 +7,8 @@ public protocol DIDMethodResolver: DIDMethod {
     ///
     /// - Parameters:
     ///   - didURI: The DID URI to resolve
-    ///   - options: The options to use when resolving the DID URI
     /// - Returns: `DIDResolutionResult` containing the resolved DID Document
     static func resolve(
-        didURI: String,
-        options: DIDMethodResolutionOptions?
+        didURI: String
     ) async -> DIDResolutionResult
 }
-
-
-/// Protocol defining the options that are available to configure when resolving a DID Method.
-/// Each DID Method should define its own options type conforming to this protocol, if it has
-/// method-specific customization options.
-public protocol DIDMethodResolutionOptions {}

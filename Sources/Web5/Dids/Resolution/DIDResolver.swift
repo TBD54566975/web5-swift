@@ -9,10 +9,7 @@ public enum DIDResolver {
     ]
 
     /// Resolves a DID URI to its DID Document
-    public static func resolve(
-        didURI: String,
-        options: DIDMethodResolutionOptions? = nil
-    ) async -> DIDResolutionResult {
+    public static func resolve(didURI: String) async -> DIDResolutionResult {
         guard let did = try? DID(didURI: didURI) else {
             return DIDResolutionResult(error: .invalidDID)
         }
@@ -21,6 +18,6 @@ public enum DIDResolver {
             return DIDResolutionResult(error: .methodNotSupported)
         }
 
-        return await methodResolver.resolve(didURI: didURI, options: options)
+        return await methodResolver.resolve(didURI: didURI)
     }
 }

@@ -13,11 +13,9 @@ extension DIDJWK: DIDMethodResolver {
     /// Resolves a `did:jwk` URI into a `DIDResolutionResult`
     /// - Parameters:
     ///   - didURI: The DID URI to resolve
-    ///   - options: The options to use when resolving the DID URI
     /// - Returns: `DIDResolution.Result` containing the resolved DID Document
     public static func resolve(
-        didURI: String,
-        options: DIDMethodResolutionOptions? = nil
+        didURI: String
     ) async -> DIDResolutionResult {
         guard let did = try? DID(didURI: didURI),
             let jwk = try? JSONDecoder().decode(Jwk.self, from: try did.identifier.decodeBase64Url())
@@ -41,15 +39,16 @@ extension DIDJWK: DIDMethodCreator {
     /// Options that can be provided to customize how a `did:jwk` is created
     public struct CreateOptions {
 
+        /// Default options to use when creating a `did:jwk`
+        public static let `default` = CreateOptions(
+            algorithm: .ed25519
+        )
+
         /// The algorithm to use when creating the backing key for the DID
         public let algorithm: CryptoAlgorithm
 
-        /// Default Initializer
-        /// - Parameters
-        ///   - algorithm: The algorithm to use when creating the backing key for the DID.
-        ///   Defaults to `.ed25519` if not specified.
         public init(
-            algorithm: CryptoAlgorithm = .ed25519
+            algorithm: CryptoAlgorithm
         ) {
             self.algorithm = algorithm
         }
@@ -59,11 +58,11 @@ extension DIDJWK: DIDMethodCreator {
     ///
     /// - Parameters:
     ///   - keyManager: `KeyManager` used to generate and store the keys associated to the DID
-    ///   - options: Options configuring how the DIDJWK is created. Uses default if not specified.
+    ///   - options: Options configuring how the DIDJWK is created
     /// - Returns: `BearerDID` that represents the created DIDJWK
     public static func create(
         keyManager: KeyManager,
-        options: CreateOptions = .init()
+        options: CreateOptions
     ) throws -> BearerDID {
         let keyAlias = try keyManager.generatePrivateKey(algorithm: options.algorithm)
         let publicKey = try keyManager.getPublicKey(keyAlias: keyAlias)
@@ -77,6 +76,21 @@ extension DIDJWK: DIDMethodCreator {
             did: did,
             document: document,
             keyManager: keyManager
+        )
+    }
+
+    /// Create a new `BearerDID` using the `did:jwk` method.
+    ///
+    /// - Parameters:
+    ///   - keyManager: `KeyManager` used to generate and store the keys associated to the DID
+    /// - Returns: `BearerDID` that represents the created DIDJWK
+    public static func create(
+        keyManager: KeyManager
+    ) throws -> BearerDID {
+        // Create a new `BearerDID` using default options
+        return try create(
+            keyManager: keyManager,
+            options: CreateOptions.default
         )
     }
 
