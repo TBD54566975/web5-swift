@@ -5,7 +5,7 @@ extension ECDSA {
 
     /// Crypto operations using the Elliptic Curve Digital Signature Algorithm (ECDSA)
     /// with the secp256k1 elliptic curve and SHA-256
-    enum Es256k: AsymmetricKeyGenerator, Signer {
+    public enum Es256k: AsymmetricKeyGenerator, Signer {
 
         public static func generatePrivateKey() throws -> Jwk {
             return try secp256k1.Signing.PrivateKey().jwk()
@@ -14,6 +14,29 @@ extension ECDSA {
         public static func computePublicKey(privateKey: Jwk) throws -> Jwk {
             let privateKey = try secp256k1.Signing.PrivateKey(privateJwk: privateKey)
             return try privateKey.publicKey.jwk()
+        }
+
+        public static func privateKeyToBytes(_ privateKey: Jwk) throws -> Data {
+            let privateKey = try secp256k1.Signing.PrivateKey(privateJwk: privateKey)
+            return privateKey.dataRepresentation
+        }
+
+        public static func privateKeyFromBytes(_ bytes: Data) throws -> Jwk {
+            return try secp256k1.Signing.PrivateKey(dataRepresentation: bytes).jwk()
+        }
+
+        public static func publicKeyToBytes(_ publicKey: Jwk) throws -> Data {
+            let publicKey = try secp256k1.Signing.PublicKey(publicJwk: publicKey)
+            return publicKey.uncompressedBytes()
+        }
+
+        public static func publicKeyFromBytes(_ bytes: Data) throws -> Jwk {
+            return try secp256k1.Signing.PublicKey(
+                dataRepresentation: bytes,
+                format: bytes.count == secp256k1.Signing.PublicKey.Constants.compressedKeySize
+                    ? .compressed
+                    : .uncompressed
+            ).jwk()
         }
 
         public static func sign<D>(payload: D, privateKey: Jwk) throws -> Data where D: DataProtocol {
@@ -74,7 +97,7 @@ extension secp256k1.Signing.PrivateKey {
 
 extension secp256k1.Signing.PublicKey {
 
-    private enum Constants {
+    fileprivate enum Constants {
         /// Uncompressed key leading byte that indicates both the X and Y coordinates are available directly within the key.
         static let uncompressedKeyID: UInt8 = 0x04
 
@@ -83,6 +106,12 @@ extension secp256k1.Signing.PublicKey {
         /// An uncompressed key is represented with a leading 0x04 bytes,
         /// followed by 32 bytes for the x-coordinate and 32 bytes for the y-coordinate.
         static let uncompressedKeySize: Int = 65
+
+        /// Size of a compressed public key, in bytes.
+        ///
+        /// A compressed key is represented with a leading 0x02 or 0x03 byte,
+        /// followed by 32 bytes for the x-coordinate.
+        static let compressedKeySize: Int = 33
     }
 
     init(publicJwk: Jwk) throws {

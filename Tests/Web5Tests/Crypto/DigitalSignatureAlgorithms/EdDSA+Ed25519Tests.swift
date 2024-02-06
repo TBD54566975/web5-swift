@@ -1,3 +1,4 @@
+import CustomDump
 import XCTest
 
 @testable import Web5
@@ -37,6 +38,23 @@ final class EdDSA_Ed25519Tests: XCTestCase {
         XCTAssertEqual(publicKey.keyIdentifier, privateKey.keyIdentifier)
         XCTAssertEqual(publicKey.x, privateKey.x)
         XCTAssertEqual(publicKey.y, privateKey.y)
+    }
+
+    func test_privateKey_toAndFromBytes() throws {
+        let privateKey = try EdDSA.Ed25519.generatePrivateKey()
+        let privateKeyBytes = try EdDSA.Ed25519.privateKeyToBytes(privateKey)
+        let restoredPrivateKey = try EdDSA.Ed25519.privateKeyFromBytes(privateKeyBytes)
+
+        XCTAssertNoDifference(privateKey, restoredPrivateKey)
+    }
+
+    func test_publicKey_toAndFromBytes() throws {
+        let privateKey = try EdDSA.Ed25519.generatePrivateKey()
+        let publicKey = try EdDSA.Ed25519.computePublicKey(privateKey: privateKey)
+        let publicKeyBytes = try EdDSA.Ed25519.publicKeyToBytes(publicKey)
+        let restoredPublicKey = try EdDSA.Ed25519.publicKeyFromBytes(publicKeyBytes)
+
+        XCTAssertNoDifference(publicKey, restoredPublicKey)
     }
 
     func test_sign() throws {
