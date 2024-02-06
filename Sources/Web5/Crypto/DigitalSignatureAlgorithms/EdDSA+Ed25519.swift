@@ -5,7 +5,7 @@ extension EdDSA {
 
     /// Cryptographic operations using the Edwards-curve Digital Signature Algorithm (EdDSA)
     /// with the Ed25519 elliptic curve
-    enum Ed25519: AsymmetricKeyGenerator, Signer {
+    public enum Ed25519: AsymmetricKeyGenerator, Signer {
 
         enum Error: Swift.Error {
             case invalidPrivateJwk
@@ -19,6 +19,24 @@ extension EdDSA {
         public static func computePublicKey(privateKey: Jwk) throws -> Jwk {
             let privateKey = try Curve25519.Signing.PrivateKey(privateJwk: privateKey)
             return try privateKey.publicKey.jwk()
+        }
+
+        public static func privateKeyToBytes(_ privateKey: Jwk) throws -> Data {
+            let privateKey = try Curve25519.Signing.PrivateKey(privateJwk: privateKey)
+            return privateKey.rawRepresentation
+        }
+
+        public static func privateKeyFromBytes(_ bytes: Data) throws -> Jwk {
+            return try Curve25519.Signing.PrivateKey(rawRepresentation: bytes).jwk()
+        }
+
+        public static func publicKeyToBytes(_ publicKey: Jwk) throws -> Data {
+            let publicKey = try Curve25519.Signing.PublicKey(publicJwk: publicKey)
+            return publicKey.rawRepresentation
+        }
+
+        public static func publicKeyFromBytes(_ bytes: Data) throws -> Jwk {
+            return try Curve25519.Signing.PublicKey(rawRepresentation: bytes).jwk()
         }
 
         public static func sign<D>(payload: D, privateKey: Jwk) throws -> Data where D: DataProtocol {
