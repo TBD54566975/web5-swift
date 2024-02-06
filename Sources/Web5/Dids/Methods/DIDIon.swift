@@ -1,13 +1,22 @@
 import Foundation
 
-enum DIDIon {
+/// `did:ion` DID Method
+public enum DIDIon: DIDMethod {
 
     public static let methodName = "ion"
+}
+
+// MARK: - DIDMethodResolver
+
+extension DIDIon: DIDMethodResolver {
 
     /// Resolves a `did:ion` URI into a `DIDResolutionResult`
-    /// - Parameter didURI: The DID URI to resolve
+    /// - Parameters:
+    ///   - didURI: The DID URI to resolve
     /// - Returns: `DIDResolutionResult` containing the resolved DID Document.
-    static func resolve(didURI: String) async -> DIDResolutionResult {
+    public static func resolve(
+        didURI: String
+    ) async -> DIDResolutionResult {
         guard let did = try? DID(didURI: didURI) else {
             return DIDResolutionResult(error: .invalidDID)
         }
@@ -28,7 +37,5 @@ enum DIDIon {
         } catch {
             return DIDResolutionResult(error: .notFound)
         }
-
     }
-
 }

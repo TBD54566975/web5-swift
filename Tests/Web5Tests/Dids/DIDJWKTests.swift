@@ -80,8 +80,8 @@ final class DIDJWKTests: XCTestCase {
         let portableDID = try bearerDID.export()
 
         let importedBearerDID = try DIDJWK.import(
-            portableDID: portableDID,
-            keyManager: keyManager
+            keyManager: keyManager,
+            portableDID: portableDID
         )
 
         XCTAssertNoDifference(importedBearerDID.did, bearerDID.did)

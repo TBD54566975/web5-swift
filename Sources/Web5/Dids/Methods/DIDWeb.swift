@@ -1,15 +1,22 @@
 import Foundation
 
-enum DIDWeb {
+/// `did:web` DID Method
+enum DIDWeb: DIDMethod {
 
     public static let methodName = "web"
+}
 
-    // MARK: - Public Static
+// MARK: - DIDMethodResolver
 
-    /// Resolves a `did:jwk` URI into a `DIDResolutionResult`
-    /// - Parameter didURI: The DID URI to resolve
-    /// - Returns: `DIDResolution.Result` containing the resolved DID Document.
-    static func resolve(didURI: String) async -> DIDResolutionResult {
+extension DIDWeb: DIDMethodResolver {
+
+    /// Resolves a `did:web` URI into a `DIDResolutionResult`
+    /// - Parameters:
+    ///   - didURI: The DID URI to resolve
+    /// - Returns: `DIDResolution.Result` containing the resolved DID Document
+    static func resolve(
+        didURI: String
+    ) async -> DIDResolutionResult {
         guard let did = try? DID(didURI: didURI),
             let url = getDIDDocumentUrl(did: did)
         else {
@@ -29,12 +36,12 @@ enum DIDWeb {
         }
     }
 
-    // MARK: - Private Static
-
     private static let wellKnownPath = "/.well-known"
     private static let didDocumentFilename = "/did.json"
 
-    private static func getDIDDocumentUrl(did: DID) -> URL? {
+    private static func getDIDDocumentUrl(
+        did: DID
+    ) -> URL? {
         let domainNameWithPath = did.identifier.replacingOccurrences(of: ":", with: "/")
         guard let decodedDomain = domainNameWithPath.removingPercentEncoding,
             var url = URL(string: "https://\(decodedDomain)")
