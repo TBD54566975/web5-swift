@@ -55,7 +55,7 @@ public struct BearerDID {
     ///   - keyAlias: Alias of the key that will be used for
     public func getSigner(verificationMethodID: String? = nil) throws -> BearerDIDSigner {
         let verificationMethod: VerificationMethod?
-        
+
         if let verificationMethodID {
             verificationMethod = document.verificationMethod?.first { $0.id == verificationMethodID }
         } else {
@@ -142,7 +142,7 @@ public struct BearerDIDSigner {
     where P: DataProtocol {
         return try self.keyManager.sign(keyAlias: keyAlias, payload: payload)
     }
-    
+
     public func verify<P, S>(payload: P, signature: S) throws -> Bool
     where P: DataProtocol, S: DataProtocol {
         let publicKey = try keyManager.getPublicKey(keyAlias: keyAlias)
