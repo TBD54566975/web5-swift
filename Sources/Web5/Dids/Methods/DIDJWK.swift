@@ -34,9 +34,48 @@ public enum DIDJWK {
         let keyAlias = try keyManager.generatePrivateKey(algorithm: options.algorithm)
         let publicKey = try keyManager.getPublicKey(keyAlias: keyAlias)
         let publicKeyBase64Url = try JSONEncoder().encode(publicKey).base64UrlEncodedString()
-        let didURI = "did:jwk:\(publicKeyBase64Url)"
 
-        return try BearerDID(didURI: didURI, keyManager: keyManager)
+        let didURI = "did:jwk:\(publicKeyBase64Url)"
+        let did = try DID(didURI: didURI)
+        let document = Self.didDocument(did: did, publicKey: publicKey)
+
+        return try BearerDID(
+            did: did,
+            document: document,
+            keyManager: keyManager
+        )
+    }
+
+    /// Import a `PortableDID` that represents a DIDJWK into a `BearerDID` that can be used
+    /// to sign and verify data
+    ///
+    /// - Parameters:
+    ///   - portableDID: The `PortableDID` to import
+    ///   - keyManager: `KeyManager` to place the imported private keys. Defaults to `InMemoryKeyManager`
+    public static func `import`(
+        portableDID: PortableDID,
+        keyManager: KeyManager = InMemoryKeyManager()
+    ) throws -> BearerDID {
+        let did = try DID(didURI: portableDID.uri)
+        guard did.methodName == methodName else {
+            throw Error.importError(
+                "Expected PortableDID with DID method \(methodName), was provided \(did.methodName)")
+        }
+
+        guard let importer = keyManager as? KeyImporter else {
+            throw Error.importError("KeyManager does not support importing keys")
+        }
+
+        // Import the privateKeys into the keyManager
+        for privateKey in portableDID.privateKeys {
+            _ = try importer.import(key: privateKey)
+        }
+
+        return try BearerDID(
+            did: did,
+            document: portableDID.document,
+            keyManager: keyManager
+        )
     }
 
     /// Resolves a `did:jwk` URI into a `DIDResolutionResult`
@@ -53,14 +92,24 @@ public enum DIDJWK {
             return DIDResolutionResult(error: .methodNotSupported)
         }
 
+        let didDocument = didDocument(did: did, publicKey: jwk)
+        return DIDResolutionResult(didDocument: didDocument)
+    }
+
+    // MARK: - Private
+
+    private static func didDocument(
+        did: DID,
+        publicKey: Jwk
+    ) -> DIDDocument {
         let verifiationMethod = VerificationMethod(
             id: "\(did.uri)#0",
             type: "JsonWebKey2020",
             controller: did.uri,
-            publicKeyJwk: jwk
+            publicKeyJwk: publicKey
         )
 
-        let didDocument = DIDDocument(
+        return DIDDocument(
             context: .list([
                 .string("https://www.w3.org/ns/did/v1"),
                 .string("https://w3id.org/security/suites/jws-2020/v1"),
@@ -72,7 +121,20 @@ public enum DIDJWK {
             capabilityDelegation: [.referenced(verifiationMethod.id)],
             capabilityInvocation: [.referenced(verifiationMethod.id)]
         )
+    }
+}
 
-        return DIDResolutionResult(didDocument: didDocument)
+// MARK: - Errors
+
+extension DIDJWK {
+    public enum Error: LocalizedError {
+        case importError(String)
+
+        public var errorDescription: String? {
+            switch self {
+            case let .importError(context):
+                return "Import error: \(context)"
+            }
+        }
     }
 }

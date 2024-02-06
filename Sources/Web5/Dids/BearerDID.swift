@@ -1,3 +1,4 @@
+import AnyCodable
 import Foundation
 
 // BearerDID is a composite type that combines a DID with a KeyManager containing keys
@@ -6,35 +7,37 @@ import Foundation
 @dynamicMemberLookup
 public struct BearerDID {
 
-    /// The DID object
-    private let did: DID
+    public typealias Metadata = [String: AnyCodable]
+
+    /// The `DID` object represented by this `BearerDID`
+    public let did: DID
+
+    /// The DIDDocument associated with this `BearerDID`
+    public let document: DIDDocument
 
     /// The `KeyManager` which manages the keys for this DID
     public let keyManager: KeyManager
 
+    /// Method-specific data associated with this `BearerDID`
+    public let metadata: Metadata?
+
     /// Default initializer
-    public init(
-        didURI: String,
-        keyManager: KeyManager
+    ///
+    /// - Parameters:
+    ///   - did: `DID` to create the `BearerDID` from
+    ///   - document: `DIDDocument` associated with the provided `did`
+    ///   - keyManager: `KeyManager` where the private key material for the provided `did` are stored
+    ///   - metadata: Additional method-specific metadata to be included with the `BearerDID`
+    init(
+        did: DID,
+        document: DIDDocument,
+        keyManager: KeyManager,
+        metadata: Metadata? = nil
     ) throws {
-        self.did = try DID(didURI: didURI)
+        self.did = did
+        self.document = document
         self.keyManager = keyManager
-    }
-
-    /// Construct a `BearerDID` from a `PortableDID`, storing the keys in a
-    /// bespoke `InMemoryKeyManager` instance
-    init(portableDID: PortableDID) throws {
-        let did = try DID(didURI: portableDID.uri)
-
-        let keyManager = InMemoryKeyManager()
-        for verificationMethodPair in portableDID.verificationMethods {
-            _ = try keyManager.import(key: verificationMethodPair.privateKey)
-        }
-
-        try self.init(
-            didURI: did.uri,
-            keyManager: keyManager
-        )
+        self.metadata = metadata
     }
 
     /// @dynamicMemberLookup allows us to access properties of the DID directly
@@ -44,37 +47,32 @@ public struct BearerDID {
 
     /// Exports the `BearerDID` into a portable format that contains the DID's URI in addition
     /// to every private key associated with a verifification method.
-    public func toPortableDID() async throws -> PortableDID {
+    public func export() throws -> PortableDID {
         guard let exporter = keyManager as? KeyExporter else {
-            throw BearerDID.Error.keyManagerNotExporter(keyManager)
+            throw Error.keyManagerNotExporter(keyManager)
         }
 
-        let resolutionResult = await DIDResolver.resolve(didURI: did.uri)
-        if let error = resolutionResult.didResolutionMetadata.error {
-            throw BearerDID.Error.didResolutionError(error)
-        }
-
-        let verificationMethods: [PortableDID.VerificationMethodKeyPair] =
-            resolutionResult
-            .didDocument?
+        let privateKeys: [Jwk] =
+            try document
             .verificationMethod?
-            .compactMap { verificationMethod in
+            .map { verificationMethod in
                 guard let publicKey = verificationMethod.publicKeyJwk,
                     let keyAlias = try? keyManager.getDeterministicAlias(key: publicKey),
                     let privateKey = try? exporter.exportKey(keyAlias: keyAlias)
                 else {
-                    return nil
+                    throw Error.exportError(
+                        "Failed to export privateKey for verificationMethod \(verificationMethod.id)"
+                    )
                 }
 
-                return PortableDID.VerificationMethodKeyPair(
-                    publicKey: publicKey,
-                    privateKey: privateKey
-                )
+                return privateKey
             } ?? []
 
         return PortableDID(
             uri: did.uri,
-            verificationMethods: verificationMethods
+            document: document,
+            privateKeys: privateKeys,
+            metadata: metadata
         )
     }
 }
@@ -85,14 +83,17 @@ extension BearerDID {
 
     public enum Error: LocalizedError {
         case keyManagerNotExporter(KeyManager)
-        case didResolutionError(String)
+        case keyManagerNotImporter(KeyManager)
+        case exportError(String)
 
         public var errorDescription: String? {
             switch self {
             case let .keyManagerNotExporter(keyManager):
                 return "\(String(describing: type(of: keyManager))) does not support exporting keys"
-            case let .didResolutionError(error):
-                return "Failed to resolve DID: \(error)"
+            case let .keyManagerNotImporter(keyManager):
+                return "\(String(describing: type(of: keyManager))) does not support importing keys"
+            case let .exportError(error):
+                return "Export error: \(error)"
             }
         }
     }

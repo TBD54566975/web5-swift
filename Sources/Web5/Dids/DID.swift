@@ -1,7 +1,7 @@
 import Foundation
 
 /// Decentralized Identifier (DID), according to the  [W3C DID Core specification](https://www.w3.org/TR/did-core).
-public struct DID {
+public struct DID: Equatable {
 
     /// Represents the complete Decentralized Identifier (DID) URI
     ///

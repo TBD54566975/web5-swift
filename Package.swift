@@ -18,7 +18,8 @@ let package = Package(
         .package(url: "https://github.com/swift-extras/swift-extras-base64.git", from: "0.7.0"),
         .package(url: "https://github.com/pointfreeco/swift-custom-dump.git", from: "1.1.2"),
         .package(url: "https://github.com/WeTransfer/Mocker.git", .upToNextMajor(from: "3.0.1")),
-        .package(url: "https://github.com/allegro/swift-junit.git", from: "2.1.0")
+        .package(url: "https://github.com/allegro/swift-junit.git", from: "2.1.0"),
+        .package(url: "https://github.com/flight-school/anycodable.git", from: "0.6.7"),
     ],
     targets: [
         .target(
@@ -26,11 +27,15 @@ let package = Package(
             dependencies: [
                 .product(name: "secp256k1", package: "secp256k1.swift"),
                 .product(name: "ExtrasBase64", package: "swift-extras-base64"),
+                .product(name: "AnyCodable", package: "anycodable"),
             ]
         ),
         .testTarget(
             name: "Web5Tests",
-            dependencies: ["Web5"]
+            dependencies: [
+                "Web5",
+                .product(name: "CustomDump", package: "swift-custom-dump"),
+            ]
         ),
         .testTarget(
             name: "Web5TestVectors",
