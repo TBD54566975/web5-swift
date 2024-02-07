@@ -1,11 +1,13 @@
 import Foundation
 
+typealias DIDMethodResolver = (String) async -> DIDResolutionResult
+
 public enum DIDResolver {
 
-    private static var methodResolvers: [String: DIDMethodResolver.Type] = [
-        DIDIon.methodName: DIDIon.self,
-        DIDJWK.methodName: DIDJWK.self,
-        DIDWeb.methodName: DIDWeb.self,
+    private static var methodResolvers: [String: DIDMethodResolver] = [
+        DIDIon.methodName: DIDIon.resolve,
+        DIDJWK.methodName: DIDJWK.resolve,
+        DIDWeb.methodName: DIDWeb.resolve,
     ]
 
     /// Resolves a DID URI to its DID Document
@@ -20,6 +22,6 @@ public enum DIDResolver {
             return DIDResolutionResult(error: .methodNotSupported)
         }
 
-        return await methodResolver.resolve(didURI: didURI)
+        return await methodResolver(didURI)
     }
 }

@@ -1,14 +1,9 @@
 import Foundation
 
 /// `did:jwk` DID Method
-public enum DIDJWK: DIDMethod {
+public enum DIDJWK {
 
     public static let methodName = "jwk"
-}
-
-// MARK: - DIDMethodResolver
-
-extension DIDJWK: DIDMethodResolver {
 
     /// Resolves a `did:jwk` URI into a `DIDResolutionResult`
     /// - Parameters:
@@ -30,11 +25,6 @@ extension DIDJWK: DIDMethodResolver {
         let didDocument = didDocument(did: did, publicKey: jwk)
         return DIDResolutionResult(didDocument: didDocument)
     }
-}
-
-// MARK: - DIDMethodCreator
-
-extension DIDJWK: DIDMethodCreator {
 
     /// Options that can be provided to customize how a `did:jwk` is created
     public struct CreateOptions {
@@ -62,7 +52,7 @@ extension DIDJWK: DIDMethodCreator {
     /// - Returns: `BearerDID` that represents the created DIDJWK
     public static func create(
         keyManager: KeyManager,
-        options: CreateOptions
+        options: CreateOptions = .default
     ) throws -> BearerDID {
         let keyAlias = try keyManager.generatePrivateKey(algorithm: options.algorithm)
         let publicKey = try keyManager.getPublicKey(keyAlias: keyAlias)
@@ -76,21 +66,6 @@ extension DIDJWK: DIDMethodCreator {
             did: did,
             document: document,
             keyManager: keyManager
-        )
-    }
-
-    /// Create a new `BearerDID` using the `did:jwk` method.
-    ///
-    /// - Parameters:
-    ///   - keyManager: `KeyManager` used to generate and store the keys associated to the DID
-    /// - Returns: `BearerDID` that represents the created DIDJWK
-    public static func create(
-        keyManager: KeyManager
-    ) throws -> BearerDID {
-        // Create a new `BearerDID` using default options
-        return try create(
-            keyManager: keyManager,
-            options: CreateOptions.default
         )
     }
 

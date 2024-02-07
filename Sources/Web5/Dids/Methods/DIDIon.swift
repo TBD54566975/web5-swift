@@ -1,14 +1,9 @@
 import Foundation
 
 /// `did:ion` DID Method
-public enum DIDIon: DIDMethod {
+public enum DIDIon {
 
     public static let methodName = "ion"
-}
-
-// MARK: - DIDMethodResolver
-
-extension DIDIon: DIDMethodResolver {
 
     /// Resolves a `did:ion` URI into a `DIDResolutionResult`
     /// - Parameters:

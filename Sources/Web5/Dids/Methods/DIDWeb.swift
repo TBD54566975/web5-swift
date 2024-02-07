@@ -1,14 +1,9 @@
 import Foundation
 
 /// `did:web` DID Method
-enum DIDWeb: DIDMethod {
+enum DIDWeb {
 
     public static let methodName = "web"
-}
-
-// MARK: - DIDMethodResolver
-
-extension DIDWeb: DIDMethodResolver {
 
     /// Resolves a `did:web` URI into a `DIDResolutionResult`
     /// - Parameters:
