@@ -60,8 +60,8 @@ public struct Jwk: Codable, Equatable {
     /// The `alg` (algorithm) parameter identifies the cryptographic algorithm intended for use with the key.
     public internal(set) var algorithm: Algorithm?
 
-    /// The "alg" (algorithm) parameter identifies the algorithm intended for use with the key.
-    public internal(set) var keyIdentifier: String?
+    /// The `kid` (key ID) parameter identifies the algorithm intended for use with the key.
+    public internal(set) var keyID: String?
 
     /// The `crv` (curve) parameter identifies the cryptographic curve intended for use with the key.
     public internal(set) var curve: Curve?
@@ -104,7 +104,7 @@ public struct Jwk: Codable, Equatable {
         publicKeyUse: PublicKeyUse? = nil,
         keyOperations: [KeyOperations]? = nil,
         algorithm: Algorithm? = nil,
-        keyIdentifier: String? = nil,
+        keyID: String? = nil,
         curve: Curve? = nil,
         x509Url: String? = nil,
         x509CertificateChain: String? = nil,
@@ -118,7 +118,7 @@ public struct Jwk: Codable, Equatable {
         self.publicKeyUse = publicKeyUse
         self.keyOperations = keyOperations
         self.algorithm = algorithm
-        self.keyIdentifier = keyIdentifier
+        self.keyID = keyID
         self.curve = curve
         self.x509Url = x509Url
         self.x509CertificateChain = x509CertificateChain
@@ -136,7 +136,7 @@ public struct Jwk: Codable, Equatable {
         case publicKeyUse = "use"
         case keyOperations = "key_ops"
         case algorithm = "alg"
-        case keyIdentifier = "kid"
+        case keyID = "kid"
         case curve = "crv"
         case x509Url = "x5u"
         case x509CertificateChain = "x5c"

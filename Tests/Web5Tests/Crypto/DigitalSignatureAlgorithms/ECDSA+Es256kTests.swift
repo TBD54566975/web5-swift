@@ -12,7 +12,7 @@ final class ECDSA_Es256kTests: XCTestCase {
 
         XCTAssertEqual(privateKey.curve, .secp256k1)
         XCTAssertEqual(privateKey.keyType, .elliptic)
-        XCTAssertNotNil(privateKey.keyIdentifier)
+        XCTAssertNotNil(privateKey.keyID)
         XCTAssertNotNil(privateKey.d)
         XCTAssertNotNil(privateKey.x)
         XCTAssertNotNil(privateKey.y)
@@ -24,14 +24,14 @@ final class ECDSA_Es256kTests: XCTestCase {
 
         XCTAssertEqual(publicKey.curve, .secp256k1)
         XCTAssertEqual(publicKey.keyType, .elliptic)
-        XCTAssertNotNil(publicKey.keyIdentifier)
+        XCTAssertNotNil(publicKey.keyID)
         XCTAssertNil(publicKey.d)
         XCTAssertNotNil(publicKey.x)
         XCTAssertNotNil(publicKey.y)
 
         XCTAssertEqual(publicKey.curve, privateKey.curve)
         XCTAssertEqual(publicKey.keyType, privateKey.keyType)
-        XCTAssertEqual(publicKey.keyIdentifier, privateKey.keyIdentifier)
+        XCTAssertEqual(publicKey.keyID, privateKey.keyID)
         XCTAssertEqual(publicKey.x, privateKey.x)
         XCTAssertEqual(publicKey.y, privateKey.y)
     }

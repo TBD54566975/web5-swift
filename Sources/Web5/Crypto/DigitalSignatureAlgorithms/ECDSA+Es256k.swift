@@ -148,7 +148,7 @@ extension secp256k1.Signing.PublicKey {
             y: y.base64UrlEncodedString()
         )
 
-        jwk.keyIdentifier = try jwk.thumbprint()
+        jwk.keyID = try jwk.thumbprint()
         return jwk
     }
 

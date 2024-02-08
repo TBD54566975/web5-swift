@@ -110,7 +110,7 @@ extension Curve25519.Signing.PublicKey {
             curve: .ed25519,
             x: rawRepresentation.base64UrlEncodedString()
         )
-        jwk.keyIdentifier = try jwk.thumbprint()
+        jwk.keyID = try jwk.thumbprint()
 
         return jwk
     }
