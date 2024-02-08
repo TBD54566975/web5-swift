@@ -40,8 +40,8 @@ public class LocalKeyManager: KeyManager {
     public func getDeterministicAlias(key: Jwk) throws -> String {
         let alias: String
 
-        if let keyIdentifier = key.keyIdentifier {
-            alias = keyIdentifier
+        if let keyID = key.keyID {
+            alias = keyID
         } else {
             alias = try key.thumbprint()
         }
