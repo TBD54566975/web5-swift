@@ -12,7 +12,7 @@ final class EdDSA_Ed25519Tests: XCTestCase {
 
         XCTAssertEqual(privateKey.keyType, .octetKeyPair)
         XCTAssertEqual(privateKey.curve, .ed25519)
-        XCTAssertNotNil(privateKey.keyIdentifier)
+        XCTAssertNotNil(privateKey.keyID)
         XCTAssertNotNil(privateKey.d)
         XCTAssertNotNil(privateKey.x)
         XCTAssertNil(privateKey.y)
@@ -28,14 +28,14 @@ final class EdDSA_Ed25519Tests: XCTestCase {
 
         XCTAssertEqual(publicKey.keyType, .octetKeyPair)
         XCTAssertEqual(publicKey.curve, .ed25519)
-        XCTAssertNotNil(publicKey.keyIdentifier)
+        XCTAssertNotNil(publicKey.keyID)
         XCTAssertNil(publicKey.d)
         XCTAssertNotNil(publicKey.x)
         XCTAssertNil(publicKey.y)
 
         XCTAssertEqual(publicKey.curve, privateKey.curve)
         XCTAssertEqual(publicKey.keyType, privateKey.keyType)
-        XCTAssertEqual(publicKey.keyIdentifier, privateKey.keyIdentifier)
+        XCTAssertEqual(publicKey.keyID, privateKey.keyID)
         XCTAssertEqual(publicKey.x, privateKey.x)
         XCTAssertEqual(publicKey.y, privateKey.y)
     }
