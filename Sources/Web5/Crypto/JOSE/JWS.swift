@@ -5,8 +5,8 @@ public struct JWS {
 
     // Supported JWS algorithms
     public enum Algorithm: String, Codable {
-        case eddsa
-        case es256k
+        case eddsa = "EdDSA"
+        case es256k = "ES256K"
     }
 
     /// JWS JOSE Header
@@ -106,7 +106,158 @@ public struct JWS {
             case critical = "crit"
         }
     }
+
+    /// Signs the provided payload with a key associated with the provided `BearerDID`.
+    /// - Parameters:
+    ///   - did: `BearerDID` to use for signing
+    ///   - payload: Data to be signed
+    ///   - detached: If true, the payload will not be included in the resulting compactJWS
+    ///   - verificationID: Optional `VerificationMethod` ID to use for signing. If not provided, the first
+    ///   assertionMethod in the `BearerDID`'s document will be used.
+    /// - Returns: compactJWS representation of the signed payload
+    public static func sign<D>(
+        did: BearerDID,
+        payload: D,
+        detached: Bool,
+        verificationMethodID: String? = nil
+    ) throws -> String
+    where D: DataProtocol {
+        let signer = try did.getSigner(verificationMethodID: verificationMethodID)
+
+        guard let publicKey = signer.verificationMethod.publicKeyJwk else {
+            throw Error.signError("Public key not found")
+        }
+
+        guard let algorithm = publicKey.algorithm else {
+            throw Error.signError("Public key algorithm not found")
+        }
+
+        let header = Header(
+            algorithm: algorithm.jwsAlgorithm,
+            keyID: signer.verificationMethod.id
+        )
+        
+        let base64UrlEncodedHeader = try JSONEncoder().encode(header).base64UrlEncodedString()
+        let base64UrlEncodedPayload = payload.base64UrlEncodedString()
+        let toSign = "\(base64UrlEncodedHeader).\(base64UrlEncodedPayload)"
+        let base64UrlEncodedSignature = try signer.sign(payload: Data(toSign.utf8)).base64UrlEncodedString()
+
+        let compactJWS: String
+        if detached {
+            compactJWS = "\(base64UrlEncodedHeader)..\(base64UrlEncodedSignature)"
+        } else {
+            compactJWS = "\(base64UrlEncodedHeader).\(base64UrlEncodedPayload).\(base64UrlEncodedSignature)"
+        }
+
+        return compactJWS
+    }
+
+    /// Verifies the integrity of a compactJWS representation of a signed payload.
+    /// - Parameters:
+    ///   - compactJWS: compactJWS representation to verify
+    ///   - detachedPayload: Optional detached payload to verify. If not provided, the payload will be assumed to be
+    ///   attached within the compactJWS.
+    ///   - expectedSigningDIDURI: Optional DID URI of the expected signer of the compactJWS. If not provided,
+    ///   the DID URI will be extracted from the compactJWS, and will be assumed to be the correct signer.
+    /// - Returns: Boolean indicating whether the provided compactJWS is valid
+    public static func verify(
+        compactJWS: String?,
+        detachedPayload: (any DataProtocol)? = nil,
+        expectedSigningDIDURI: String? = nil
+    ) async throws -> Bool {
+        guard let compactJWS else {
+            throw Error.verifyError("compactJWS not provided")
+        }
+
+        let parts = compactJWS.split(separator: ".", omittingEmptySubsequences: false)
+        guard parts.count == 3 else {
+            throw Error.verifyError("Malformed JWS - Expected 3 parts, got \(parts.count)")
+        }
+
+        let base64UrlEncodedPayload: String
+        if let detachedPayload {
+            guard parts[1].count == 0 else {
+                // Caller provided a detached payload to verify, but the compactJWS has a payload in it.
+                // Throw an error, as this is likely a mistake by the caller.
+                throw Error.verifyError("Expected detached payload")
+            }
+            base64UrlEncodedPayload = detachedPayload.base64UrlEncodedString()
+        } else {
+            base64UrlEncodedPayload = String(parts[1])
+        }
+
+        let base64UrlEncodedHeader = String(parts[0])
+        let header = try JSONDecoder().decode(
+            JWS.Header.self,
+            from: try base64UrlEncodedHeader.decodeBase64Url()
+        )
+
+        guard let verificationMethodID = header.keyID else {
+            throw Error.verifyError("Malformed JWS Header - `kid` is required")
+        }
+        
+        let verificationMethodIDParts = verificationMethodID.split(separator: "#")
+        guard verificationMethodIDParts.count == 2 else {
+            throw Error.verifyError("Malformed JWS Header - `kid` must be a DID URI with a fragment")
+        }
+
+        let signingDIDURI = String(verificationMethodIDParts[0])
+        if let expectedSigningDIDURI {
+            guard signingDIDURI == expectedSigningDIDURI else {
+                // The compactJWS was signed by someone other than the provided `expectedSigningDIDURI`.
+                // This means that the signature is not valid for what the caller requested.
+                return false
+            }
+        }
+
+        let resolutionResult = await DIDResolver.resolve(didURI: signingDIDURI)
+
+        if let error = resolutionResult.didResolutionMetadata.error {
+            throw Error.verifyError("Failed to resolve \(signingDIDURI) - \(error)")
+        }
+
+        guard let verificationMethod = resolutionResult.didDocument?.verificationMethod?.first(
+            where: { vm in vm.id == verificationMethodID }
+        )
+        else {
+            throw Error.verifyError("No VerificationMethod not found that matches \(verificationMethodID)")
+        }
+
+        guard let publicKey = verificationMethod.publicKeyJwk else {
+            throw Error.verifyError("VerificationMethod has no `publicKeyJwk`")
+        }
+
+        let base64UrlEncodedSignature = String(parts[2])
+        let toVerify = "\(base64UrlEncodedHeader).\(base64UrlEncodedPayload)"
+
+        return try Crypto.verify(
+            payload: Data(toVerify.utf8),
+            signature: try base64UrlEncodedSignature.decodeBase64Url(),
+            publicKey: publicKey,
+            jwsAlgorithm: header.algorithm
+        )
+    }
 }
+
+// MARK: - Errors
+
+extension JWS {
+    public enum Error: LocalizedError {
+        case signError(String)
+        case verifyError(String)
+
+        public var errorDescription: String? {
+            switch self {
+            case let .signError(reason):
+                return "Signing Error: \(reason)"
+            case let .verifyError(reason):
+                return "Verify Error: \(reason)"
+            }
+        }
+    }
+}
+
+// MARK: - Extensions
 
 extension Jwk.Algorithm {
 

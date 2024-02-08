@@ -71,7 +71,11 @@ public struct BearerDID {
         }
 
         let keyAlias = try keyManager.getDeterministicAlias(key: publicKey)
-        return BearerDIDSigner(keyAlias: keyAlias, keyManager: keyManager)
+        return BearerDIDSigner(
+            keyAlias: keyAlias,
+            keyManager: keyManager,
+            verificationMethod: verificationMethod
+        )
     }
 
     /// Exports the `BearerDID` into a portable format that contains the DID's URI in addition
@@ -137,6 +141,7 @@ public struct BearerDIDSigner {
 
     let keyAlias: String
     let keyManager: KeyManager
+    let verificationMethod: VerificationMethod
 
     public func sign<P>(payload: P) throws -> Data
     where P: DataProtocol {
