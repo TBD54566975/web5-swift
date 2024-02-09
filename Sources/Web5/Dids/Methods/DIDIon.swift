@@ -1,7 +1,11 @@
 import Foundation
 
 /// `did:ion` DID Method
-public enum DIDIon {}
+public enum DIDIon: DIDMethod {
+
+    public static let methodName = "ion"
+
+}
 
 // MARK: - Resolver
 
@@ -9,6 +13,8 @@ extension DIDIon {
     
     /// Resolver for the `did:ion` DID method
     public struct Resolver: DIDMethodResolver {
+
+        // MARK: Types
 
         /// Options that can be configured for resolving `did:ion` DIDs
         public struct ResolutionOptions {
@@ -30,6 +36,13 @@ extension DIDIon {
             )
         }
 
+        // MARK: Properties
+
+        /// The options to use for resolution process
+        public let options: ResolutionOptions
+
+        // MARK: Lifecycle
+
         /// Initialize a new `DIDIon.Resolver`
         /// - Parameters:
         ///   - options: The options to use for resolution process
@@ -39,12 +52,7 @@ extension DIDIon {
             self.options = options
         }
 
-        /// The options to use for resolution process
-        public let options: ResolutionOptions
-
-        // MARK: DIDMethodResolver
-
-        public let methodName = "ion"
+        // MARK: Public Functions
 
         /// Resolves a `did:ion` URI into a `DIDResolutionResult`
         /// - Parameters:

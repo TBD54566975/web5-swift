@@ -1,7 +1,11 @@
 import Foundation
 
 /// `did:web` DID Method
-enum DIDWeb {}
+enum DIDWeb: DIDMethod {
+    
+    public static let methodName = "web"
+
+}
 
 // MARK: - Resolver
 
@@ -10,12 +14,12 @@ extension DIDWeb {
     /// Resolver fo the `did:web` DID method
     public struct Resolver: DIDMethodResolver {
 
+        // MARK: Lifecycle
+
         /// Initialize a new `DIDWeb.Resolver`
         public init() {}
 
-        // MARK: DIDMethodResolver
-
-        public let methodName = "web"
+        // MARK: Public Functions
 
         /// Resolves a `did:web` URI into a `DIDResolutionResult`
         /// - Parameters:
@@ -43,7 +47,7 @@ extension DIDWeb {
             }
         }
 
-        // MARK: Private
+        // MARK: Private Functions
 
         private func getDIDDocumentUrl(
             did: DID
