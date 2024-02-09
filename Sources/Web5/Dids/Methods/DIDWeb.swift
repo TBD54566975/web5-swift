@@ -14,6 +14,10 @@ extension DIDWeb {
     /// Resolver fo the `did:web` DID method
     public struct Resolver: DIDMethodResolver {
 
+        // MARK: Properties
+
+        public let methodName = DIDWeb.methodName
+
         // MARK: Lifecycle
 
         /// Initialize a new resolver for the `did:web` method

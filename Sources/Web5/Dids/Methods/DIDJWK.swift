@@ -114,6 +114,10 @@ extension DIDJWK {
     /// Resolver for the `did:jwk` method
     public struct Resolver: DIDMethodResolver {
 
+        // MARK: Properties
+
+        public let methodName = DIDJWK.methodName
+
         // MARK: Lifecycle
 
         /// Initialize a new resolver for the `did:jwk` method

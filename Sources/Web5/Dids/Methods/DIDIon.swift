@@ -38,6 +38,8 @@ extension DIDIon {
 
         // MARK: Properties
 
+        public let methodName = DIDIon.methodName
+
         /// The options to use for resolution process
         public let options: ResolutionOptions
 
