@@ -11,11 +11,13 @@ final class Web5TestVectorsDidJwk: XCTestCase {
             subdirectory: "test-vectors/did_jwk"
         )
 
+        let resolver = DIDJWK.Resolver()
+
         testVector.run { vector in
             let expectation = XCTestExpectation(description: "async resolve")
             Task {
                 let didURI = vector.input
-                let result = await DIDJWK.resolve(didURI: didURI)
+                let result = await resolver.resolve(didURI: didURI)
                 XCTAssertNoDifference(result, vector.output)
                 expectation.fulfill()
             }

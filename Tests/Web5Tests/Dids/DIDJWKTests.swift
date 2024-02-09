@@ -5,6 +5,8 @@ import XCTest
 
 final class DIDJWKTests: XCTestCase {
 
+    let resolver = DIDJWK.Resolver()
+
     func test_create() throws {
         let keyManager = InMemoryKeyManager()
         let didJwk = try DIDJWK.create(keyManager: keyManager)
@@ -13,28 +15,28 @@ final class DIDJWKTests: XCTestCase {
     }
 
     func test_resolveWithError_onInvalidDIDURI() async throws {
-        let resolutionResult = await DIDJWK.resolve(didURI: "hi")
+        let resolutionResult = await resolver.resolve(didURI: "hi")
 
         XCTAssertNil(resolutionResult.didDocument)
         XCTAssertEqual(resolutionResult.didResolutionMetadata.error, DIDResolutionResult.Error.invalidDID.rawValue)
     }
 
     func test_resolveWithError_ifDIDURINotJwk() async {
-        let resolutionResult = await DIDJWK.resolve(didURI: "did:key:z6MkpTHR8VNsBxYAAWHut2Geadd9jSwuBV8xRoAnwWsdvktH")
+        let resolutionResult = await resolver.resolve(didURI: "did:key:z6MkpTHR8VNsBxYAAWHut2Geadd9jSwuBV8xRoAnwWsdvktH")
 
         XCTAssertNil(resolutionResult.didDocument)
         XCTAssertEqual(resolutionResult.didResolutionMetadata.error, DIDResolutionResult.Error.invalidDID.rawValue)
     }
 
     func test_resolveWithError_ifDIDURIIsNotValidBase64Url() async {
-        let resolutionResult = await DIDJWK.resolve(didURI: "did:jwk:!!!")
+        let resolutionResult = await resolver.resolve(didURI: "did:jwk:!!!")
 
         XCTAssertNil(resolutionResult.didDocument)
         XCTAssertEqual(resolutionResult.didResolutionMetadata.error, DIDResolutionResult.Error.invalidDID.rawValue)
     }
 
     func test_resolveWithError_ifMethodNotJwk() async {
-        let resolutionResult = await DIDJWK.resolve(
+        let resolutionResult = await resolver.resolve(
             didURI:
                 "did:web:eyJraWQiOiJ1cm46aWV0ZjpwYXJhbXM6b2F1dGg6andrLXRodW1icHJpbnQ6c2hhLTI1NjpGZk1iek9qTW1RNGVmVDZrdndUSUpqZWxUcWpsMHhqRUlXUTJxb2JzUk1NIiwia3R5IjoiT0tQIiwiY3J2IjoiRWQyNTUxOSIsImFsZyI6IkVkRFNBIiwieCI6IkFOUmpIX3p4Y0tCeHNqUlBVdHpSYnA3RlNWTEtKWFE5QVBYOU1QMWo3azQifQ"
         )
@@ -48,7 +50,7 @@ final class DIDJWKTests: XCTestCase {
         let keyManager = InMemoryKeyManager()
         let didJWK = try DIDJWK.create(keyManager: keyManager)
 
-        let resolutionResult = await DIDJWK.resolve(didURI: didJWK.uri)
+        let resolutionResult = await resolver.resolve(didURI: didJWK.uri)
         XCTAssertNotNil(resolutionResult.didDocument)
         XCTAssertEqual(resolutionResult.didDocument?.id, didJWK.uri)
         XCTAssertEqual(resolutionResult.didDocument?.verificationMethod?.first?.id, "\(didJWK.uri)#0")
@@ -62,7 +64,7 @@ final class DIDJWKTests: XCTestCase {
     func test_resolveWithKnownDIDURI() async {
         let didURI =
             "did:jwk:eyJraWQiOiJ1cm46aWV0ZjpwYXJhbXM6b2F1dGg6andrLXRodW1icHJpbnQ6c2hhLTI1NjpGZk1iek9qTW1RNGVmVDZrdndUSUpqZWxUcWpsMHhqRUlXUTJxb2JzUk1NIiwia3R5IjoiT0tQIiwiY3J2IjoiRWQyNTUxOSIsImFsZyI6IkVkRFNBIiwieCI6IkFOUmpIX3p4Y0tCeHNqUlBVdHpSYnA3RlNWTEtKWFE5QVBYOU1QMWo3azQifQ"
-        let resolutionResult = await DIDJWK.resolve(didURI: didURI)
+        let resolutionResult = await resolver.resolve(didURI: didURI)
 
         XCTAssertNotNil(resolutionResult.didDocument)
         XCTAssertEqual(resolutionResult.didDocument?.id, didURI)
