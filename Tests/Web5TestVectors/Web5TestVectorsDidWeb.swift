@@ -15,10 +15,9 @@ final class Web5TestVectorsDidWeb: XCTestCase {
                 guard let mockServer = mockServer else { return [] }
 
                 return try mockServer.map({ key, value in
-                    print("Mocking \(key)")
                     return Mock(
                         url: URL(string: key)!,
-                        dataType: .json,
+                        contentType: .json,
                         statusCode: 200,
                         data: [
                             .get: try JSONEncoder().encode(value)
@@ -33,6 +32,8 @@ final class Web5TestVectorsDidWeb: XCTestCase {
             subdirectory: "test-vectors/did_web"
         )
 
+        let resolver = DIDWeb.Resolver()
+
         testVector.run { vector in
             let expectation = XCTestExpectation(description: "async resolve")
             Task {
@@ -40,7 +41,7 @@ final class Web5TestVectorsDidWeb: XCTestCase {
                 try vector.input.mocks().forEach { $0.register() }
 
                 /// Resolve each input didURI, make sure it matches output
-                let result = await DIDWeb.resolve(didURI: vector.input.didUri)
+                let result = await resolver.resolve(didURI: vector.input.didUri)
                 XCTAssertNoDifference(result, vector.output)
                 expectation.fulfill()
             }
