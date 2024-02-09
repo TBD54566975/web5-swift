@@ -43,7 +43,7 @@ extension DIDIon {
 
         // MARK: Lifecycle
 
-        /// Initialize a new `DIDIon.Resolver`
+        /// Initialize a new resolver for the `did:ion` method
         /// - Parameters:
         ///   - options: The options to use for resolution process
         public init(

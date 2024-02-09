@@ -5,27 +5,6 @@ public enum DIDJWK {
 
     public static let methodName = "jwk"
 
-    /// Resolves a `did:jwk` URI into a `DIDResolutionResult`
-    /// - Parameters:
-    ///   - didURI: The DID URI to resolve
-    /// - Returns: `DIDResolution.Result` containing the resolved DID Document
-    public static func resolve(
-        didURI: String
-    ) async -> DIDResolutionResult {
-        guard let did = try? DID(didURI: didURI),
-            let jwk = try? JSONDecoder().decode(Jwk.self, from: try did.identifier.decodeBase64Url())
-        else {
-            return DIDResolutionResult(error: .invalidDID)
-        }
-
-        guard did.methodName == self.methodName else {
-            return DIDResolutionResult(error: .methodNotSupported)
-        }
-
-        let didDocument = didDocument(did: did, publicKey: jwk)
-        return DIDResolutionResult(didDocument: didDocument)
-    }
-
     /// Options that can be provided to customize how a `did:jwk` is created
     public struct CreateOptions {
 
@@ -125,6 +104,43 @@ public enum DIDJWK {
             capabilityDelegation: [.referenced(verifiationMethod.id)],
             capabilityInvocation: [.referenced(verifiationMethod.id)]
         )
+    }
+}
+
+// MARK: - Resolver
+
+extension DIDJWK {
+
+    /// Resolver for the `did:jwk` method
+    public struct Resolver: DIDMethodResolver {
+
+        // MARK: Lifecycle
+
+        /// Initialize a new resolver for the `did:jwk` method
+        public init() {}
+
+        // MARK: Public Functions
+
+        /// Resolves a `did:jwk` URI into a `DIDResolutionResult`
+        /// - Parameters:
+        ///   - didURI: The DID URI to resolve
+        /// - Returns: `DIDResolution.Result` containing the resolved DID Document
+        public func resolve(
+            didURI: String
+        ) async -> DIDResolutionResult {
+            guard let did = try? DID(didURI: didURI),
+                let jwk = try? JSONDecoder().decode(Jwk.self, from: try did.identifier.decodeBase64Url())
+            else {
+                return DIDResolutionResult(error: .invalidDID)
+            }
+
+            guard did.methodName == methodName else {
+                return DIDResolutionResult(error: .methodNotSupported)
+            }
+
+            let didDocument = didDocument(did: did, publicKey: jwk)
+            return DIDResolutionResult(didDocument: didDocument)
+        }
     }
 }
 

@@ -16,7 +16,7 @@ extension DIDWeb {
 
         // MARK: Lifecycle
 
-        /// Initialize a new `DIDWeb.Resolver`
+        /// Initialize a new resolver for the `did:web` method
         public init() {}
 
         // MARK: Public Functions
