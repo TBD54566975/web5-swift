@@ -13,40 +13,40 @@ import Foundation
 /// A DID Document can be retrieved by _resolving_ a DID URI
 public struct DIDDocument: Codable, Equatable {
 
-    public let context: Context?
+    public internal(set) var context: Context?
 
     /// The DID URI for a particular DID subject is expressed using the id property in the DID document.
-    public let id: String
+    public internal(set) var id: String
 
     /// A DID subject can have multiple identifiers for different purposes, or at
     /// different times. The assertion that two or more DIDs (or other types of URI)
     /// refer to the same DID subject can be made using the alsoKnownAs property.
-    public let alsoKnownAs: [String]?
+    public internal(set) var alsoKnownAs: [String]?
 
     /// A DID controller is an entity that is authorized to make changes to a
     /// DID document. The process of authorizing a DID controller is defined
     /// by the DID method.
-    public let controller: OneOrMany<String>?
+    public internal(set) var controller: OneOrMany<String>?
 
     /// Cryptographic public keys, which can be used to authenticate or authorize
     /// interactions with the DID subject or associated parties.
     ///
     /// [Specification Reference](https://www.w3.org/TR/did-core/#verification-methods)
-    public let verificationMethod: [VerificationMethod]?
+    public internal(set) var verificationMethod: [VerificationMethod]?
 
     /// Services are used in DID documents to express ways of communicating with
     /// the DID subject or associated entities.
     /// A service can be any type of service the DID subject wants to advertise.
     ///
     /// [Specification Reference](https://www.w3.org/TR/did-core/#services)
-    public let service: [Service]?
+    public internal(set) var service: [Service]?
 
     /// The assertionMethod verification relationship is used to specify how the
     /// DID subject is expected to express claims, such as for the purposes of
     /// issuing a Verifiable Credential
     ///
     /// [Specification Reference](https://www.w3.org/TR/did-core/#assertion)
-    public let assertionMethod: [EmbeddedOrReferencedVerificationMethod]?
+    public internal(set) var assertionMethod: [EmbeddedOrReferencedVerificationMethod]?
 
     /// `assertionMethod`, dereferencing any `VerificationMethod`s that are referenced
     public var assertionMethodDereferenced: [VerificationMethod]? {
@@ -58,7 +58,7 @@ public struct DIDDocument: Codable, Equatable {
     /// into a website or engaging in any sort of challenge-response protocol.
     ///
     /// [Specification Reference](https://www.w3.org/TR/did-core/#authentication)
-    public let authentication: [EmbeddedOrReferencedVerificationMethod]?
+    public internal(set) var authentication: [EmbeddedOrReferencedVerificationMethod]?
 
     /// `authentication`, dereferencing any `VerificationMethod`s that are referenced
     public var authenticationDereferenced: [VerificationMethod]? {
@@ -71,7 +71,7 @@ public struct DIDDocument: Codable, Equatable {
     /// establishing a secure communication channel with the recipient
     ///
     /// [Specification Reference](https://www.w3.org/TR/did-core/#key-agreement)
-    public let keyAgreement: [EmbeddedOrReferencedVerificationMethod]?
+    public internal(set) var keyAgreement: [EmbeddedOrReferencedVerificationMethod]?
 
     /// `authentication`, dereferencing any `VerificationMethod`s that are referenced
     public var keyAgreementDereferenced: [VerificationMethod]? {
@@ -84,7 +84,7 @@ public struct DIDDocument: Codable, Equatable {
     /// authority to access a specific HTTP API to a subordinate.
     ///
     /// [Specification Reference](https://www.w3.org/TR/did-core/#capability-delegation)
-    public let capabilityDelegation: [EmbeddedOrReferencedVerificationMethod]?
+    public internal(set) var capabilityDelegation: [EmbeddedOrReferencedVerificationMethod]?
 
     /// `capabilityDelegation`, dereferencing any `VerificationMethod`s that are referenced
     public var capabilityDelegationDereferenced: [VerificationMethod]? {
@@ -97,37 +97,11 @@ public struct DIDDocument: Codable, Equatable {
     /// DID Document
     ///
     /// [Specification Reference](https://www.w3.org/TR/did-core/#capability-invocation)
-    public let capabilityInvocation: [EmbeddedOrReferencedVerificationMethod]?
+    public internal(set) var capabilityInvocation: [EmbeddedOrReferencedVerificationMethod]?
 
     /// `capabilityInvocation`, dereferencing any `VerificationMethod`s that are referenced
     public var capabilityInvocationDereferenced: [VerificationMethod]? {
         capabilityInvocation?.compactMap { $0.dereferenced(with: self) }
-    }
-
-    init(
-        context: Context? = nil,
-        id: String,
-        alsoKnownAs: [String]? = nil,
-        controller: OneOrMany<String>? = nil,
-        verificationMethod: [VerificationMethod]? = nil,
-        service: [Service]? = nil,
-        assertionMethod: [EmbeddedOrReferencedVerificationMethod]? = nil,
-        authentication: [EmbeddedOrReferencedVerificationMethod]? = nil,
-        keyAgreement: [EmbeddedOrReferencedVerificationMethod]? = nil,
-        capabilityDelegation: [EmbeddedOrReferencedVerificationMethod]? = nil,
-        capabilityInvocation: [EmbeddedOrReferencedVerificationMethod]? = nil
-    ) {
-        self.context = context
-        self.id = id
-        self.alsoKnownAs = alsoKnownAs
-        self.controller = controller
-        self.verificationMethod = verificationMethod
-        self.service = service
-        self.assertionMethod = assertionMethod
-        self.authentication = authentication
-        self.keyAgreement = keyAgreement
-        self.capabilityDelegation = capabilityDelegation
-        self.capabilityInvocation = capabilityInvocation
     }
 
     enum CodingKeys: String, CodingKey {
@@ -155,7 +129,7 @@ public struct DIDDocument: Codable, Equatable {
         /// Timestamp of the Create operation. The value of the property MUST be a
         /// string formatted as an XML Datetime normalized to UTC 00:00:00 and
         /// without sub-second decimal precision. For example: 2020-12-20T19:17:47Z.
-        let created: String?
+        public internal(set) var created: String?
 
         /// Timestamp of the last Update operation for the document version which was
         /// resolved. The value of the property MUST follow the same formatting rules
@@ -163,26 +137,26 @@ public struct DIDDocument: Codable, Equatable {
         /// operation has never been performed on the DID document. If an updated
         /// property exists, it can be the same value as the created property
         /// when the difference between the two timestamps is less than one second.
-        let updated: String?
+        public internal(set) var updated: String?
 
         /// If a DID has been deactivated, DID document metadata MUST include this
         /// property with the boolean value true. If a DID has not been deactivated,
         /// this property is OPTIONAL, but if included, MUST have the boolean value
         /// false.
-        let deactivated: Bool?
+        public internal(set) var deactivated: Bool?
 
         /// Indicates the version of the last Update operation for the document version
         /// which was resolved.
-        let versionId: String?
+        public internal(set) var versionId: String?
 
         /// Indicates the timestamp of the next Update operation. The value of the
         /// property MUST follow the same formatting rules as the created property.
-        let nextUpdate: String?
+        public internal(set) var nextUpdate: String?
 
         /// If the resolved document version is not the latest version of the document.
         /// It indicates the timestamp of the next Update operation. The value of the
         /// property MUST follow the same formatting rules as the created property.
-        let nextVersionId: String?
+        public internal(set) var nextVersionId: String?
 
         /// A DID method can define different forms of a DID that are logically
         /// equivalent. An example is when a DID takes one form prior to registration
@@ -190,33 +164,16 @@ public struct DIDDocument: Codable, Equatable {
         /// In this case, the DID method specification might need to express one or
         /// more DIDs that are logically equivalent to the resolved DID as a property
         /// of the DID document. This is the purpose of the equivalentId property.
-        let equivalentId: [String]?
+        public internal(set) var equivalentId: [String]?
 
         /// The canonicalId property is identical to the equivalentId property except:
         /// * It is associated with a single value rather than a set
         /// * The DID is defined to be the canonical ID for the DID subject within
         ///   the scope of the containing DID document.
-        let canonicalId: String?
+        public internal(set) var canonicalId: String?
 
-        internal init(
-            created: String? = nil,
-            updated: String? = nil,
-            deactivated: Bool? = nil,
-            versionId: String? = nil,
-            nextUpdate: String? = nil,
-            nextVersionId: String? = nil,
-            equivalentId: [String]? = nil,
-            canonicalId: String? = nil
-        ) {
-            self.created = created
-            self.updated = updated
-            self.deactivated = deactivated
-            self.versionId = versionId
-            self.nextUpdate = nextUpdate
-            self.nextVersionId = nextVersionId
-            self.equivalentId = equivalentId
-            self.canonicalId = canonicalId
-        }
+        /// Types for DIDs that support type indexing.
+        public internal(set) var types: [Int]?
     }
 }
 
@@ -229,11 +186,11 @@ public struct DIDDocument: Codable, Equatable {
 ///
 /// [Specification Reference](https://www.w3.org/TR/did-core/#verification-methods)
 public struct VerificationMethod: Codable, Equatable {
-    public let id: String
-    public let type: String
-    public let controller: String
-    public let publicKeyJwk: Jwk?
-    public let publicKeyMultibase: String?
+    public internal(set) var id: String
+    public internal(set) var type: String
+    public internal(set) var controller: String
+    public internal(set) var publicKeyJwk: Jwk?
+    public internal(set) var publicKeyMultibase: String?
 
     /// Computed property that returns the absolute ID of the verification method.
     public var absoluteId: String {
@@ -243,20 +200,6 @@ public struct VerificationMethod: Codable, Equatable {
             return id
         }
     }
-
-    init(
-        id: String,
-        type: String,
-        controller: String,
-        publicKeyJwk: Jwk? = nil,
-        publicKeyMultibase: String? = nil
-    ) {
-        self.id = id
-        self.type = type
-        self.controller = controller
-        self.publicKeyJwk = publicKeyJwk
-        self.publicKeyMultibase = publicKeyMultibase
-    }
 }
 
 /// Services are used in DID documents to express ways of communicating with
@@ -265,9 +208,9 @@ public struct VerificationMethod: Codable, Equatable {
 ///
 /// [Specification Reference](https://www.w3.org/TR/did-core/#services)
 public struct Service: Codable, Equatable {
-    public let id: String
-    public let type: String
-    public let serviceEndpoint: String
+    public internal(set) var id: String
+    public internal(set) var type: String
+    public internal(set) var serviceEndpoint: String
 }
 
 /// DID Documents can have embedded or referenced verification methods.
