@@ -6,6 +6,7 @@ public enum DIDResolver {
 
     private static var methodResolvers: [String: DIDMethodResolver] = {
         let defaultResolvers: [DIDMethodResolver] = [
+            DIDDHT.Resolver(),
             DIDJWK.Resolver(),
             DIDIon.Resolver(),
             DIDWeb.Resolver()
