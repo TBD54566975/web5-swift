@@ -272,7 +272,7 @@ extension DIDDHT {
                     verificationMethods.append(
                         VerificationMethod(
                             id: methodID,
-                            type: "JsonWebKey2020",
+                            type: "JsonWebKey",
                             controller: answer.attributes["c"] ?? did.uri,
                             publicKeyJwk: publicKey
                         )
