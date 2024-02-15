@@ -210,7 +210,7 @@ public struct VerificationMethod: Codable, Equatable {
 public struct Service: Codable, Equatable {
     public internal(set) var id: String
     public internal(set) var type: String
-    public internal(set) var serviceEndpoint: String
+    public internal(set) var serviceEndpoint: OneOrMany<String>
 }
 
 /// DID Documents can have embedded or referenced verification methods.

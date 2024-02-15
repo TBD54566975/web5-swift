@@ -231,16 +231,18 @@ extension DIDDHT {
         ) throws -> (DIDDocument, DIDDocument.Metadata) {
             var idLookup = [String: String]()
 
-            var alsoKnownAs = [String]()
-            var controllers = [String]()
-            var verificationMethods = [VerificationMethod]()
-            var services = [Service]()
+            var alsoKnownAs: [String]?
+            var controllers: [String]?
+            var verificationMethods: [VerificationMethod]?
+            var services: [Service]?
             var authentication: [EmbeddedOrReferencedVerificationMethod]?
             var assertionMethod: [EmbeddedOrReferencedVerificationMethod]?
             var capabilityDelegation: [EmbeddedOrReferencedVerificationMethod]?
             var capabilityInvocation: [EmbeddedOrReferencedVerificationMethod]?
             var keyAgreement: [EmbeddedOrReferencedVerificationMethod]?
             var types: [Int]?
+
+            var rootRecord: TextRecord? = nil
 
             /// `did:dht` properties are ONLY present in DNS TXT records.
             /// Loop through the answers, only taking into consideration the text records.
@@ -249,16 +251,16 @@ extension DIDDHT {
 
                 if dnsRecordID.hasPrefix("aka") {
                     // Process an also known as record
-                    alsoKnownAs.append(contentsOf: answer.values)
+                    alsoKnownAs = answer.values
                 } else if dnsRecordID.hasPrefix("cnt") {
                     // Process a controller record
-                    controllers.append(contentsOf: answer.values)
+                    controllers = answer.values
                 } else if dnsRecordID.hasPrefix("k") {
                     // Process verification methods
                     let publicKeyBytes = try answer.attributes["k"]!.decodeBase64Url()
                     let namedCurve = RegisteredKeyType(rawValue: Int(answer.attributes["t"]!)!)
 
-                    let publicKey: Jwk
+                    var publicKey: Jwk
                     switch namedCurve {
                     case .Ed25519:
                         publicKey = try EdDSA.Ed25519.publicKeyFromBytes(publicKeyBytes)
@@ -268,8 +270,18 @@ extension DIDDHT {
                         throw Error.resolutionError(.unsupportedPublicKey)
                     }
 
+                    // If this is the `k0` record, this key represents the identity key.
+                    // Always set this `kid` to `"0"` for the identity key.
+                    if dnsRecordID == "k0" {
+                        publicKey.keyID = "0"
+                    }
+
+                    if verificationMethods == nil {
+                        verificationMethods = []
+                    }
+
                     let methodID = "\(did.uri)#\(answer.attributes["id"]!)"
-                    verificationMethods.append(
+                    verificationMethods?.append(
                         VerificationMethod(
                             id: methodID,
                             type: "JsonWebKey",
@@ -285,11 +297,15 @@ extension DIDDHT {
                     let serviceEndpoint = answer.attributes["se"]!
                     let type = answer.attributes["t"]!
 
-                    services.append(
+                    if services == nil {
+                        services = []
+                    }
+
+                    services?.append(
                         Service(
                             id: id,
                             type: type,
-                            serviceEndpoint: serviceEndpoint
+                            serviceEndpoint: OneOrMany(serviceEndpoint.components(separatedBy: Constants.VALUE_SEPARATOR))!
                         )
                     )
                 } else if dnsRecordID.hasPrefix("typ") {
@@ -300,28 +316,34 @@ extension DIDDHT {
 
                     types = values.components(separatedBy: Constants.VALUE_SEPARATOR).compactMap { Int($0) }
                 } else if dnsRecordID.hasPrefix("did") {
-                    // Parse root record
-                    func recordIDsToMethodIDs(data: String) -> [String] {
-                        return data
-                            .components(separatedBy: Constants.VALUE_SEPARATOR)
-                            .compactMap { idLookup[String($0)] }
-                    }
+                    // Save the root record for processing after all other records
+                    rootRecord = answer
+                }
+            }
 
-                    if let auth = answer.attributes["auth"] {
-                        authentication = recordIDsToMethodIDs(data: auth).map { .referenced($0) }
-                    }
-                    if let asm = answer.attributes["asm"] {
-                        assertionMethod = recordIDsToMethodIDs(data: asm).map { .referenced($0) }
-                    }
-                    if let del = answer.attributes["del"] {
-                        capabilityDelegation = recordIDsToMethodIDs(data: del).map{ .referenced($0) }
-                    }
-                    if let inv = answer.attributes["inv"] {
-                        capabilityInvocation = recordIDsToMethodIDs(data: inv).map { .referenced($0) }
-                    }
-                    if let agm = answer.attributes["agm"] {
-                        keyAgreement = recordIDsToMethodIDs(data: agm).map { .referenced($0) }
-                    }
+            // Parse root record last (if present).
+            // This is done last, as it depends on other DNSPacket records.
+            if let rootRecord {
+                func recordIDsToMethodIDs(data: String) -> [String] {
+                    return data
+                        .components(separatedBy: Constants.VALUE_SEPARATOR)
+                        .compactMap { idLookup[String($0)] }
+                }
+
+                if let auth = rootRecord.attributes["auth"] {
+                    authentication = recordIDsToMethodIDs(data: auth).map { .referenced($0) }
+                }
+                if let asm = rootRecord.attributes["asm"] {
+                    assertionMethod = recordIDsToMethodIDs(data: asm).map { .referenced($0) }
+                }
+                if let del = rootRecord.attributes["del"] {
+                    capabilityDelegation = recordIDsToMethodIDs(data: del).map{ .referenced($0) }
+                }
+                if let inv = rootRecord.attributes["inv"] {
+                    capabilityInvocation = recordIDsToMethodIDs(data: inv).map { .referenced($0) }
+                }
+                if let agm = rootRecord.attributes["agm"] {
+                    keyAgreement = recordIDsToMethodIDs(data: agm).map { .referenced($0) }
                 }
             }
 
@@ -329,7 +351,7 @@ extension DIDDHT {
                 DIDDocument(
                     id: did.uri,
                     alsoKnownAs: alsoKnownAs,
-                    controller: .many(controllers),
+                    controller: OneOrMany(controllers),
                     verificationMethod: verificationMethods,
                     service: services,
                     assertionMethod: assertionMethod,

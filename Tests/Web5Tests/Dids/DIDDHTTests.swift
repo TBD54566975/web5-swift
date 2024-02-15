@@ -1,3 +1,5 @@
+import CustomDump
+import DNS
 import Mocker
 import XCTest
 
@@ -187,5 +189,211 @@ final class DIDDHTTests: XCTestCase {
         let didResolutionResult = await DIDDHT.Resolver().resolve(didURI: didURI)
 
         XCTAssertNotNil(didResolutionResult.didDocumentMetadata.versionId)
+    }
+
+    /// https://did-dht.com/#vector-1
+    func test_document_fromDNSPacket_vector1() throws {
+        let did = try DID(didURI: "did:dht:cyuoqaf7itop8ohww4yn5ojg13qaq83r9zihgqntc5i9zwrfdfoo")
+        let dnsPacket = DNS.Message(
+            type: .response,
+            answers: [
+                TextRecord(
+                    name: "_did.",
+                    ttl: 7200,
+                    attributes: [
+                        "v": "0",
+                        "vm": "k0",
+                        "auth": "k0",
+                        "asm": "k0",
+                        "inv": "k0",
+                        "del": "k0",
+                    ]
+                ),
+                TextRecord(
+                    name: "_k0._did.",
+                    ttl: 7200,
+                    attributes: [
+                        "id": "0",
+                        "t": "0",
+                        "k": "YCcHYL2sYNPDlKaALcEmll2HHyT968M4UWbr-9CFGWE",
+                    ]
+                ),
+            ]
+        )
+
+        let (didDocument, _) = try DIDDHT.Document.fromDNSPacket(did: did, dnsPacket: dnsPacket)
+        
+        let expectedDIDDocumentJSON = """
+        {
+          "id": "did:dht:cyuoqaf7itop8ohww4yn5ojg13qaq83r9zihgqntc5i9zwrfdfoo",
+          "verificationMethod": [
+            {
+              "id": "did:dht:cyuoqaf7itop8ohww4yn5ojg13qaq83r9zihgqntc5i9zwrfdfoo#0",
+              "type": "JsonWebKey",
+              "controller": "did:dht:cyuoqaf7itop8ohww4yn5ojg13qaq83r9zihgqntc5i9zwrfdfoo",
+              "publicKeyJwk": {
+                "kty": "OKP",
+                "crv": "Ed25519",
+                "x": "YCcHYL2sYNPDlKaALcEmll2HHyT968M4UWbr-9CFGWE",
+                "alg": "EdDSA",
+                "kid": "0"
+              }
+            }
+          ],
+          "authentication": [
+            "did:dht:cyuoqaf7itop8ohww4yn5ojg13qaq83r9zihgqntc5i9zwrfdfoo#0"
+          ],
+          "assertionMethod": [
+            "did:dht:cyuoqaf7itop8ohww4yn5ojg13qaq83r9zihgqntc5i9zwrfdfoo#0"
+          ],
+          "capabilityInvocation": [
+            "did:dht:cyuoqaf7itop8ohww4yn5ojg13qaq83r9zihgqntc5i9zwrfdfoo#0"
+          ],
+          "capabilityDelegation": [
+            "did:dht:cyuoqaf7itop8ohww4yn5ojg13qaq83r9zihgqntc5i9zwrfdfoo#0"
+          ]
+        }
+        """
+        guard let expectedDIDDocumentData = expectedDIDDocumentJSON.data(using: .utf8) else {
+            XCTFail("Unable to convert JSON string to Data")
+            return
+        }
+
+        let expectedDIDDocument = try JSONDecoder().decode(DIDDocument.self, from: expectedDIDDocumentData)
+        XCTAssertNoDifference(didDocument, expectedDIDDocument)
+    }
+
+    /// https://did-dht.com/#vector-2
+    func test_document_fromDNSPacket_vector2() throws {
+        let did = try DID(didURI: "did:dht:cyuoqaf7itop8ohww4yn5ojg13qaq83r9zihgqntc5i9zwrfdfoo")
+        let dnsPacket = DNS.Message(
+            type: .response,
+            answers: [
+                TextRecord(
+                    name: "_did.",
+                    ttl: 7200,
+                    attributes: [
+                        "v": "0",
+                        "vm": "k0,k1",
+                        "svc": "s0",
+                        "auth": "k0",
+                        "asm": "k0,k1",
+                        "inv": "k0,k1",
+                        "del": "k0",
+                    ]
+                ),
+                TextRecord(
+                    name: "_cnt.did.",
+                    ttl: 7200,
+                    values: ["did:example:abcd"]
+                ),
+                TextRecord(
+                    name: "_aka.did.",
+                    ttl: 7200,
+                    values: ["did:example:efgh", "did:example:ijkl"]
+                ),
+                TextRecord(
+                    name: "_k0._did.",
+                    ttl: 7200,
+                    attributes: [
+                        "id": "0",
+                        "t": "0",
+                        "k": "YCcHYL2sYNPDlKaALcEmll2HHyT968M4UWbr-9CFGWE",
+                    ]
+                ),
+                TextRecord(
+                    name: "_k1.did.",
+                    ttl: 7200,
+                    attributes: [
+                        "id": "0GkvkdCGu3DL7Mkv0W1DhTMCBT9-z0CkFqZoJQtw7vw",
+                        "t": "1",
+                        "k": "Atf6NCChxjWpnrfPt1WDVE4ipYVSvi4pXCq4SUjx0jT9",
+                        "c": "did:dht:i9xkp8ddcbcg8jwq54ox699wuzxyifsqx4jru45zodqu453ksz6y",
+                    ]
+                ),
+                TextRecord(
+                    name: "_s0.did.",
+                    ttl: 7200,
+                    attributes: [
+                        "id": "service-1",
+                        "t": "TestService",
+                        "se": "https://test-service.com/1,https://test-service.com/2",
+                    ]
+                ),
+                TextRecord(
+                    name: "_typ.did.",
+                    ttl: 7200,
+                    attributes: [
+                        "id": "1,2,3",
+                    ]
+                )
+            ]
+        )
+
+        let (didDocument, _) = try DIDDHT.Document.fromDNSPacket(did: did, dnsPacket: dnsPacket)
+
+        let expectedDIDDocumentJSON = """
+        {
+          "id": "did:dht:cyuoqaf7itop8ohww4yn5ojg13qaq83r9zihgqntc5i9zwrfdfoo",
+          "controller": "did:example:abcd",
+          "alsoKnownAs": ["did:example:efgh", "did:example:ijkl"],
+          "verificationMethod": [
+            {
+              "id": "did:dht:cyuoqaf7itop8ohww4yn5ojg13qaq83r9zihgqntc5i9zwrfdfoo#0",
+              "type": "JsonWebKey",
+              "controller": "did:dht:cyuoqaf7itop8ohww4yn5ojg13qaq83r9zihgqntc5i9zwrfdfoo",
+              "publicKeyJwk": {
+                "kty": "OKP",
+                "crv": "Ed25519",
+                "x": "YCcHYL2sYNPDlKaALcEmll2HHyT968M4UWbr-9CFGWE",
+                "alg": "EdDSA",
+                "kid": "0"
+              }
+            },
+            {
+              "id": "did:dht:cyuoqaf7itop8ohww4yn5ojg13qaq83r9zihgqntc5i9zwrfdfoo#0GkvkdCGu3DL7Mkv0W1DhTMCBT9-z0CkFqZoJQtw7vw",
+              "type": "JsonWebKey",
+              "controller": "did:dht:i9xkp8ddcbcg8jwq54ox699wuzxyifsqx4jru45zodqu453ksz6y",
+              "publicKeyJwk": {
+                "kty": "EC",
+                "crv": "secp256k1",
+                "x": "1_o0IKHGNamet8-3VYNUTiKlhVK-LilcKrhJSPHSNP0",
+                "y": "qzU8qqh0wKB6JC_9HCu8pHE-ZPkDpw4AdJ-MsV2InVY",
+                "alg": "ES256K",
+                "kid": "0GkvkdCGu3DL7Mkv0W1DhTMCBT9-z0CkFqZoJQtw7vw"
+              }
+            }
+          ],
+          "authentication": [
+            "did:dht:cyuoqaf7itop8ohww4yn5ojg13qaq83r9zihgqntc5i9zwrfdfoo#0"
+          ],
+          "assertionMethod": [
+            "did:dht:cyuoqaf7itop8ohww4yn5ojg13qaq83r9zihgqntc5i9zwrfdfoo#0",
+            "did:dht:cyuoqaf7itop8ohww4yn5ojg13qaq83r9zihgqntc5i9zwrfdfoo#0GkvkdCGu3DL7Mkv0W1DhTMCBT9-z0CkFqZoJQtw7vw"
+          ],
+          "capabilityInvocation": [
+            "did:dht:cyuoqaf7itop8ohww4yn5ojg13qaq83r9zihgqntc5i9zwrfdfoo#0",
+            "did:dht:cyuoqaf7itop8ohww4yn5ojg13qaq83r9zihgqntc5i9zwrfdfoo#0GkvkdCGu3DL7Mkv0W1DhTMCBT9-z0CkFqZoJQtw7vw"
+          ],
+          "capabilityDelegation": [
+            "did:dht:cyuoqaf7itop8ohww4yn5ojg13qaq83r9zihgqntc5i9zwrfdfoo#0"
+          ],
+          "service": [
+            {
+              "id": "did:dht:cyuoqaf7itop8ohww4yn5ojg13qaq83r9zihgqntc5i9zwrfdfoo#service-1",
+              "type": "TestService",
+              "serviceEndpoint": ["https://test-service.com/1", "https://test-service.com/2"]
+            }
+          ]
+        }
+        """
+
+        guard let expectedDIDDocumentData = expectedDIDDocumentJSON.data(using: .utf8) else {
+            XCTFail("Unable to convert JSON string to Data")
+            return
+        }
+
+        let expectedDIDDocument = try JSONDecoder().decode(DIDDocument.self, from: expectedDIDDocumentData)
+        XCTAssertNoDifference(didDocument, expectedDIDDocument)
     }
 }
