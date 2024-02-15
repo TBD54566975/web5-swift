@@ -167,9 +167,9 @@ extension CryptoAlgorithm {
     fileprivate var signer: Signer.Type? {
         switch self {
         case .es256k:
-            return ECDSA.Es256k.self
+            return Secp256k1.self
         case .ed25519:
-            return EdDSA.Ed25519.self
+            return Ed25519.self
         }
     }
 
@@ -182,9 +182,9 @@ extension CryptoAlgorithm {
     fileprivate var asymmetricKeyGenerator: AsymmetricKeyGenerator.Type? {
         switch self {
         case .es256k:
-            return ECDSA.Es256k.self
+            return Secp256k1.self
         case .ed25519:
-            return EdDSA.Ed25519.self
+            return Ed25519.self
         }
     }
 }

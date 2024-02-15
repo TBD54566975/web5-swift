@@ -1,73 +1,70 @@
 import Foundation
 import secp256k1
 
-extension ECDSA {
+/// Crypto operations using the Elliptic Curve Digital Signature Algorithm (ECDSA)
+/// with the secp256k1 elliptic curve and SHA-256
+public enum Secp256k1: AsymmetricKeyGenerator, Signer {
 
-    /// Crypto operations using the Elliptic Curve Digital Signature Algorithm (ECDSA)
-    /// with the secp256k1 elliptic curve and SHA-256
-    public enum Es256k: AsymmetricKeyGenerator, Signer {
+    public static func generatePrivateKey() throws -> Jwk {
+        return try secp256k1.Signing.PrivateKey().jwk()
+    }
 
-        public static func generatePrivateKey() throws -> Jwk {
-            return try secp256k1.Signing.PrivateKey().jwk()
-        }
+    public static func computePublicKey(privateKey: Jwk) throws -> Jwk {
+        let privateKey = try secp256k1.Signing.PrivateKey(privateJwk: privateKey)
+        return try privateKey.publicKey.jwk()
+    }
 
-        public static func computePublicKey(privateKey: Jwk) throws -> Jwk {
-            let privateKey = try secp256k1.Signing.PrivateKey(privateJwk: privateKey)
-            return try privateKey.publicKey.jwk()
-        }
+    public static func privateKeyToBytes(_ privateKey: Jwk) throws -> Data {
+        let privateKey = try secp256k1.Signing.PrivateKey(privateJwk: privateKey)
+        return privateKey.dataRepresentation
+    }
 
-        public static func privateKeyToBytes(_ privateKey: Jwk) throws -> Data {
-            let privateKey = try secp256k1.Signing.PrivateKey(privateJwk: privateKey)
-            return privateKey.dataRepresentation
-        }
+    public static func privateKeyFromBytes(_ bytes: Data) throws -> Jwk {
+        return try secp256k1.Signing.PrivateKey(dataRepresentation: bytes).jwk()
+    }
 
-        public static func privateKeyFromBytes(_ bytes: Data) throws -> Jwk {
-            return try secp256k1.Signing.PrivateKey(dataRepresentation: bytes).jwk()
-        }
+    public static func publicKeyToBytes(_ publicKey: Jwk) throws -> Data {
+        let publicKey = try secp256k1.Signing.PublicKey(publicJwk: publicKey)
+        return publicKey.uncompressedBytes()
+    }
 
-        public static func publicKeyToBytes(_ publicKey: Jwk) throws -> Data {
-            let publicKey = try secp256k1.Signing.PublicKey(publicJwk: publicKey)
-            return publicKey.uncompressedBytes()
-        }
+    public static func publicKeyFromBytes(_ bytes: Data) throws -> Jwk {
+        return try secp256k1.Signing.PublicKey(
+            dataRepresentation: bytes,
+            format: bytes.count == secp256k1.Signing.PublicKey.Constants.compressedKeySize
+                ? .compressed
+                : .uncompressed
+        ).jwk()
+    }
 
-        public static func publicKeyFromBytes(_ bytes: Data) throws -> Jwk {
-            return try secp256k1.Signing.PublicKey(
-                dataRepresentation: bytes,
-                format: bytes.count == secp256k1.Signing.PublicKey.Constants.compressedKeySize
-                    ? .compressed
-                    : .uncompressed
-            ).jwk()
-        }
+    public static func sign<D>(payload: D, privateKey: Jwk) throws -> Data where D: DataProtocol {
+        let privateKey = try secp256k1.Signing.PrivateKey(privateJwk: privateKey)
+        return try privateKey.signature(for: payload).compactRepresentation
+    }
 
-        public static func sign<D>(payload: D, privateKey: Jwk) throws -> Data where D: DataProtocol {
-            let privateKey = try secp256k1.Signing.PrivateKey(privateJwk: privateKey)
-            return try privateKey.signature(for: payload).compactRepresentation
-        }
+    public static func verify<P, S>(payload: P, signature: S, publicKey: Jwk) throws -> Bool
+    where P: DataProtocol, S: DataProtocol {
+        let publicKey = try secp256k1.Signing.PublicKey(publicJwk: publicKey)
+        let ecdsaSignature = try secp256k1.Signing.ECDSASignature(compactRepresentation: signature)
+        let normalizedSignature = try ecdsaSignature.normalized()
 
-        public static func verify<P, S>(payload: P, signature: S, publicKey: Jwk) throws -> Bool
-        where P: DataProtocol, S: DataProtocol {
-            let publicKey = try secp256k1.Signing.PublicKey(publicJwk: publicKey)
-            let ecdsaSignature = try secp256k1.Signing.ECDSASignature(compactRepresentation: signature)
-            let normalizedSignature = try ecdsaSignature.normalized()
+        return publicKey.isValidSignature(normalizedSignature, for: payload)
+    }
 
-            return publicKey.isValidSignature(normalizedSignature, for: payload)
-        }
+    public static func isValidPrivateKey(_ privateKey: Jwk) -> Bool {
+        let privateKey = try? secp256k1.Signing.PrivateKey(privateJwk: privateKey)
+        return privateKey != nil
+    }
 
-        public static func isValidPrivateKey(_ privateKey: Jwk) -> Bool {
-            let privateKey = try? secp256k1.Signing.PrivateKey(privateJwk: privateKey)
-            return privateKey != nil
-        }
+    public static func isValidPublicKey(_ publicKey: Jwk) -> Bool {
+        let publicKey = try? secp256k1.Signing.PublicKey(publicJwk: publicKey)
+        return publicKey != nil
+    }
 
-        public static func isValidPublicKey(_ publicKey: Jwk) -> Bool {
-            let publicKey = try? secp256k1.Signing.PublicKey(publicJwk: publicKey)
-            return publicKey != nil
-        }
-
-        /// Errors thrown by `ECDSA.Es256k`
-        enum Error: Swift.Error {
-            case invalidPrivateJwk
-            case invalidPublicJwk
-        }
+    /// Errors thrown by `Secp256k1`
+    enum Error: Swift.Error {
+        case invalidPrivateJwk
+        case invalidPublicJwk
     }
 }
 
@@ -81,7 +78,7 @@ extension secp256k1.Signing.PrivateKey {
             privateJwk.algorithm == .es256k || privateJwk.curve == .secp256k1,
             let d = privateJwk.d
         else {
-            throw ECDSA.Es256k.Error.invalidPrivateJwk
+            throw Secp256k1.Error.invalidPrivateJwk
         }
 
         try self.init(dataRepresentation: d.decodeBase64Url())
@@ -122,7 +119,7 @@ extension secp256k1.Signing.PublicKey {
             let x = publicJwk.x,
             let y = publicJwk.y
         else {
-            throw ECDSA.Es256k.Error.invalidPublicJwk
+            throw Secp256k1.Error.invalidPublicJwk
         }
 
         var data = Data()
@@ -131,7 +128,7 @@ extension secp256k1.Signing.PublicKey {
         data.append(contentsOf: try y.decodeBase64Url())
 
         guard data.count == Constants.uncompressedKeySize else {
-            throw ECDSA.Es256k.Error.invalidPublicJwk
+            throw Secp256k1.Error.invalidPublicJwk
         }
 
         try self.init(dataRepresentation: data, format: .uncompressed)
