@@ -19,7 +19,7 @@ final class Web5TestVectorsCryptoEd25519: XCTestCase {
 
         testVector.run { vector in
             let vectorBlock = {
-                let signature = try EdDSA.Ed25519.sign(
+                let signature = try Ed25519.sign(
                     payload: try XCTUnwrap(Data.fromHexString(vector.input.data)),
                     privateKey: vector.input.key
                 )
@@ -30,16 +30,16 @@ final class Web5TestVectorsCryptoEd25519: XCTestCase {
                 //
                 // Because of this, the signature we just generated will NOT be the same as the vector's output,
                 // but both will be valid signatures.
-                let isVectorOutputSignatureValid = try EdDSA.Ed25519.verify(
+                let isVectorOutputSignatureValid = try Ed25519.verify(
                     payload: try XCTUnwrap(Data.fromHexString(vector.input.data)),
                     signature: try XCTUnwrap(Data.fromHexString(try XCTUnwrap(vector.output))),
-                    publicKey: try EdDSA.Ed25519.computePublicKey(privateKey: vector.input.key)
+                    publicKey: try Ed25519.computePublicKey(privateKey: vector.input.key)
                 )
 
-                let isGeneratedSignatureValid = try EdDSA.Ed25519.verify(
+                let isGeneratedSignatureValid = try Ed25519.verify(
                     payload: try XCTUnwrap(Data.fromHexString(vector.input.data)),
                     signature: signature,
-                    publicKey: try EdDSA.Ed25519.computePublicKey(privateKey: vector.input.key)
+                    publicKey: try Ed25519.computePublicKey(privateKey: vector.input.key)
                 )
 
                 XCTAssertTrue(isVectorOutputSignatureValid)
@@ -71,7 +71,7 @@ final class Web5TestVectorsCryptoEd25519: XCTestCase {
 
         testVector.run { vector in
             let vectorBlock = {
-                let isValid = try EdDSA.Ed25519.verify(
+                let isValid = try Ed25519.verify(
                     payload: try XCTUnwrap(Data.fromHexString(vector.input.data)),
                     signature: try XCTUnwrap(Data.fromHexString(vector.input.signature)),
                     publicKey: vector.input.key

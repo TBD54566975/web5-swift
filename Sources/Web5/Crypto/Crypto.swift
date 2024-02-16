@@ -138,7 +138,7 @@ extension CryptoAlgorithm {
                     algorithm = .ed25519
                 }
             case .es256k:
-                algorithm = .es256k
+                algorithm = .secp256k1
             }
         } else {
             // If no JWS algorithm was provided, use the public key alone to determine the `CryptoAlgorithm`
@@ -166,10 +166,10 @@ extension CryptoAlgorithm {
     /// `Signer` associated with the `CryptoAlgorithm`
     fileprivate var signer: Signer.Type? {
         switch self {
-        case .es256k:
-            return ECDSA.Es256k.self
+        case .secp256k1:
+            return Secp256k1.self
         case .ed25519:
-            return EdDSA.Ed25519.self
+            return Ed25519.self
         }
     }
 
@@ -181,10 +181,10 @@ extension CryptoAlgorithm {
     /// `AsymmetricKeyGenerator` associated with the `CryptoAlgorithm`
     fileprivate var asymmetricKeyGenerator: AsymmetricKeyGenerator.Type? {
         switch self {
-        case .es256k:
-            return ECDSA.Es256k.self
+        case .secp256k1:
+            return Secp256k1.self
         case .ed25519:
-            return EdDSA.Ed25519.self
+            return Ed25519.self
         }
     }
 }
