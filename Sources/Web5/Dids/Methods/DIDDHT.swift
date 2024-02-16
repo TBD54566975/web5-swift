@@ -177,7 +177,7 @@ extension DIDDHT {
         ///   - message: BEP44Message to verify and parse
         /// - Returns: DNS packet represented by the BEP44Message
         static func parseBEP44GetMessage(_ message: BEP44Message) throws -> DNS.Message {
-            let publicKey = try EdDSA.Ed25519.publicKeyFromBytes(message.k)
+            let publicKey = try Ed25519.publicKeyFromBytes(message.k)
             let bencodedData = try (
                 Bencode.encodeAsBytes("seq") +
                 Bencode.encodeAsBytes(message.seq) +
@@ -185,7 +185,7 @@ extension DIDDHT {
                 Bencode.encodeAsBytes(message.v)
             )
 
-            let isValid = try EdDSA.Ed25519.verify(
+            let isValid = try Ed25519.verify(
                 payload: bencodedData,
                 signature: message.sig,
                 publicKey: publicKey
@@ -263,9 +263,9 @@ extension DIDDHT {
                     var publicKey: Jwk
                     switch namedCurve {
                     case .Ed25519:
-                        publicKey = try EdDSA.Ed25519.publicKeyFromBytes(publicKeyBytes)
+                        publicKey = try Ed25519.publicKeyFromBytes(publicKeyBytes)
                     case .secp256k1:
-                        publicKey = try ECDSA.Es256k.publicKeyFromBytes(publicKeyBytes)
+                        publicKey = try Secp256k1.publicKeyFromBytes(publicKeyBytes)
                     default:
                         throw Error.resolutionError(.unsupportedPublicKey)
                     }
