@@ -50,16 +50,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Bootstrap
-        run: make bootstrap
-
-      - uses: swift-actions/setup-swift@v1
-        with:
-          swift-version: "5.9"
-
-      - name: Get swift version
-        run: swift --version # Swift 5.9.2
-
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
@@ -72,10 +62,18 @@ jobs:
           # For more details on CodeQL's query packs, refer to: https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
           # queries: security-extended,security-and-quality
 
-      # Autobuild attempts to build any compiled languages (C/C++, C#, Go, Java, or Swift).
-      # If this step fails, then you should remove it and run the build manually (see below)
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+      - name: Bootstrap
+        run: make bootstrap
+
+      - uses: swift-actions/setup-swift@v1
+        with:
+          swift-version: "5.9"
+
+      - name: Get swift version
+        run: swift --version # Swift 5.9.2
+
+      - name: Build
+        run: swift build
 
       # ℹ️ Command-line programs to run using the OS shell.
       # 📚 See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsrun
