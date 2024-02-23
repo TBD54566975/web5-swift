@@ -47,4 +47,12 @@ jobs:
             exit 1
           fi
           echo "New version: $NEW_TAG"
-          echo "tag=$NEW_TAG" >> $GITHUB_OUTPUT
+          echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.bump_version.outputs.new_tag }}
+          draft: false
+          prerelease: true
+          generate_release_notes: true
