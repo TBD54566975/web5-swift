@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      versionType:
+        description: "Version Type - Major, Minor, Patch, Manual"
+        required: true
+        default: "Patch"
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+          - manual
+      customVersion:
+        description: "Custom Version - Use if Version Type is Manual"
+        required: false
+
+jobs:
+  release:
+    # validate if input was versionType = Major, Minor, Patch or Manual
+    # if its Manual we require the `customVersion` value
+    if: github.event.inputs.versionType != 'manual' || github.event.inputs.customVersion != null
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 100
+          fetch-tags: true
+
+      - name: Bump tag version
+        id: bump_version
+        run: |
+          VERSION_TYPE=${{ github.event.inputs.versionType }}
+          CUSTOM_VERSION=${{ github.event.inputs.customVersion }}
+          if [[ "$VERSION_TYPE" == "manual" && -n "$CUSTOM_VERSION" ]]; then
+            NEW_TAG=$CUSTOM_VERSION
+          elif [[ "$VERSION_TYPE" == "major" || "$VERSION_TYPE" == "minor" ||  "$VERSION_TYPE" == "patch" ]]; then
+            npm install -g semver
+            LAST_TAG=$(git describe --match "[0-9]*.[0-9]*.[0-9]*" --tags --abbrev=0)
+            NEW_TAG=$(semver -i $VERSION_TYPE $LAST_TAG)
+          else
+            echo "Invalid version type"
+            exit 1
+          fi
+          echo "New version: $NEW_TAG"
+          echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.bump_version.outputs.new_tag }}
+          draft: false
+          prerelease: true
+          generate_release_notes: true
