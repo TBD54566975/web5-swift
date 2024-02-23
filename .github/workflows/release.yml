@@ -6,7 +6,7 @@ on:
       versionType:
         description: "Version Type - Major, Minor, Patch, Manual"
         required: true
-        default: "Patch"
+        default: patch
         type: choice
         options:
           - major
