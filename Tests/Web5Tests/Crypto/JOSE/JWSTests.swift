@@ -8,7 +8,7 @@ final class JWSTests: XCTestCase {
     let payload = "Hello, World!".data(using: .utf8)!
 
     func test_sign_detachedPayload() throws {
-        let compactJWS = try JWS.sign(did: did, payload: payload, detached: true)
+        let compactJWS = try JWS.sign(did: did, payload: payload, options: .init(detached: true))
         let compactJWSParts = compactJWS.split(separator: ".", omittingEmptySubsequences: false)
 
         XCTAssertEqual(compactJWSParts.count, 3)
@@ -17,7 +17,7 @@ final class JWSTests: XCTestCase {
     }
 
     func test_sign_attachedPayload() throws {
-        let compactJWS = try JWS.sign(did: did, payload: payload, detached: false)
+        let compactJWS = try JWS.sign(did: did, payload: payload, options: .init(detached: false))
         let compactJWSParts = compactJWS.split(separator: ".", omittingEmptySubsequences: false)
 
         XCTAssertEqual(compactJWSParts.count, 3)
@@ -26,28 +26,28 @@ final class JWSTests: XCTestCase {
     }
 
     func test_verify_detachedPayload() async throws {
-        let compactJWS = try JWS.sign(did: did, payload: payload, detached: true)
+        let compactJWS = try JWS.sign(did: did, payload: payload, options: .init(detached: true))
         let isValid = try await JWS.verify(compactJWS: compactJWS, detachedPayload: payload)
 
         XCTAssertTrue(isValid)
     }
 
     func test_verify_attachedPayload() async throws {
-        let compactJWS = try JWS.sign(did: did, payload: payload, detached: false)
+        let compactJWS = try JWS.sign(did: did, payload: payload, options: .init(detached: false))
         let isValid = try await JWS.verify(compactJWS: compactJWS)
 
         XCTAssertTrue(isValid)
     }
 
     func test_verify_expectedSigningDIDURI_match() async throws {
-        let compactJWS = try JWS.sign(did: did, payload: payload, detached: false)
+        let compactJWS = try JWS.sign(did: did, payload: payload, options: .init(detached: false))
         let isValid = try await JWS.verify(compactJWS: compactJWS, expectedSigningDIDURI: did.uri)
 
         XCTAssertTrue(isValid)
     }
 
     func test_verify_expectedSigningDIDURI_noMatch() async throws {
-        let compactJWS = try JWS.sign(did: did, payload: payload, detached: false)
+        let compactJWS = try JWS.sign(did: did, payload: payload, options: .init(detached: false))
         let isValid = try await JWS.verify(compactJWS: compactJWS, expectedSigningDIDURI: "did:example:1234")
 
         // compactJWS was signed by `did`, but we're expecting it to be signed by a different DID.

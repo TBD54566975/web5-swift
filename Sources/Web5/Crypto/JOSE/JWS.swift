@@ -107,22 +107,42 @@ public struct JWS {
         }
     }
 
+    /// Options that can be used to configure the Sign operation of a JWS
+    public struct SignOptions {
+        /// Boolean determining if the payload is detached or not in the resulting JWS signature
+        public let detached: Bool
+
+        /// Optional `VerificationMethod` ID to use for signing. If not provided, the first
+        /// verificationMethod in the `BearerDID`'s document will be used.
+        public let verificationMethodID: String?
+
+        // Optional type of verification method to use for signing. If not provided, the first
+        public let type: String?
+
+        public init(
+            detached: Bool = false,
+            verificationMethodID: String? = nil,
+            type: String? = nil
+        ) {
+            self.detached = detached
+            self.verificationMethodID = verificationMethodID
+            self.type = type
+        }
+    }
+
     /// Signs the provided payload with a key associated with the provided `BearerDID`.
     /// - Parameters:
     ///   - did: `BearerDID` to use for signing
     ///   - payload: Data to be signed
-    ///   - detached: If true, the payload will not be included in the resulting compactJWS
-    ///   - verificationID: Optional `VerificationMethod` ID to use for signing. If not provided, the first
-    ///   assertionMethod in the `BearerDID`'s document will be used.
+    ///   - options: Options to configure the signing operation
     /// - Returns: compactJWS representation of the signed payload
     public static func sign<D>(
         did: BearerDID,
         payload: D,
-        detached: Bool,
-        verificationMethodID: String? = nil
+        options: SignOptions
     ) throws -> String
     where D: DataProtocol {
-        let signer = try did.getSigner(verificationMethodID: verificationMethodID)
+        let signer = try did.getSigner(verificationMethodID: options.verificationMethodID)
 
         guard let publicKey = signer.verificationMethod.publicKeyJwk else {
             throw Error.signError("Public key not found")
@@ -134,7 +154,8 @@ public struct JWS {
 
         let header = Header(
             algorithm: algorithm.jwsAlgorithm,
-            keyID: signer.verificationMethod.id
+            keyID: signer.verificationMethod.id,
+            type: options.type
         )
         
         let base64UrlEncodedHeader = try JSONEncoder().encode(header).base64UrlEncodedString()
@@ -143,7 +164,7 @@ public struct JWS {
         let base64UrlEncodedSignature = try signer.sign(payload: Data(toSign.utf8)).base64UrlEncodedString()
 
         let compactJWS: String
-        if detached {
+        if options.detached {
             compactJWS = "\(base64UrlEncodedHeader)..\(base64UrlEncodedSignature)"
         } else {
             compactJWS = "\(base64UrlEncodedHeader).\(base64UrlEncodedPayload).\(base64UrlEncodedSignature)"
