@@ -90,4 +90,29 @@ public struct JWT {
             )
         )
     }
+
+    public struct ParsedJWT {
+        let header: JWS.Header
+        let payload: Data
+
+        public init(
+            header: JWS.Header,
+            payload: Data
+        ) {
+            self.header = header
+            self.payload = payload
+        }
+    }
+
+    public static func parse(jwtString: String) throws -> ParsedJWT {
+        let parts = jwtString.components(separatedBy: ".")
+
+        guard parts.count == 3 else {
+            throw JWTError.invalidJWT
+        }
+    }
+
+    public enum JWTError: Error {
+        case invalidJWT
+    }
 }
