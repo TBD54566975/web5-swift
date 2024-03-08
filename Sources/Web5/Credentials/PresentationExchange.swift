@@ -105,7 +105,6 @@ public enum PresentationExchange {
     ) throws -> Void {
         let inputDescriptorToVcMap = try selectCredentials(vcJWTs: vcJWTs, presentationDefinition: presentationDefinition)
         guard inputDescriptorToVcMap.count == presentationDefinition.inputDescriptors.count else {
-            print("this is testing it reaches this line")
             throw Error.missingCredentials(presentationDefinition.inputDescriptors.count, inputDescriptorToVcMap.count)
         }
     }
