@@ -21,7 +21,7 @@ let package = Package(
         .package(url: "https://github.com/allegro/swift-junit.git", from: "2.1.0"),
         .package(url: "https://github.com/flight-school/anycodable.git", from: "0.6.7"),
         .package(url: "https://github.com/Bouke/DNS.git", from: "1.2.0"),
-        .package(url: "https://github.com/KittyMac/Sextant.git", .upToNextMinor(from: "0.4.0")),
+        .package(url: "https://github.com/KittyMac/Sextant.git", "0.4.0"..."0.4.30"),
         .package(url: "https://github.com/kylef/JSONSchema.swift.git", from: "0.6.0")
     ],
     targets: [
