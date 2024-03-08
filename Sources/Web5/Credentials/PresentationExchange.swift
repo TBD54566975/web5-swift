@@ -89,6 +89,7 @@ public enum Optionality: Codable {
 
 public enum PresentationExchange {
 
+    // MARK: - Select Credentials
     public static func selectCredentials(
         vcJWTs: [String],
         presentationDefinition: PresentationDefinitionV2
@@ -101,6 +102,7 @@ public enum PresentationExchange {
         case parseFailed
     }
 
+    // MARK: - Map Input Descriptors to VCs
     private static func mapInputDescriptorsToVCs(
         vcJWTList: [String],
         presentationDefinition: PresentationDefinitionV2
@@ -131,7 +133,8 @@ public enum PresentationExchange {
         }
         return result
     }
-    
+ 
+    // MARK: - VC Satisfies Input Descriptor
     private static func vcSatisfiesInputDescriptor(vc: VCDataModel, inputDescriptor: InputDescriptorV2) throws -> Bool {
         // If the Input Descriptor has constraints and fields defined, evaluate them.
         guard let fields = inputDescriptor.constraints.fields else {
