@@ -104,13 +104,10 @@ public enum PresentationExchange {
         presentationDefinition: PresentationDefinitionV2
     ) throws -> Void {
         let inputDescriptorToVcMap = try selectCredentials(vcJWTs: vcJWTs, presentationDefinition: presentationDefinition)
-        guard inputDescriptorToVcMap.count > 0 else {
-            throw Error.parseFailed
+        guard inputDescriptorToVcMap.count == presentationDefinition.inputDescriptors.count else {
+            print("this is testing it reaches this line")
+            throw Error.missingCredentials(presentationDefinition.inputDescriptors.count, inputDescriptorToVcMap.count)
         }
-    }
-    
-    public enum Error: LocalizedError {
-        case parseFailed
     }
 
     // MARK: - Map Input Descriptors to VCs
@@ -121,7 +118,7 @@ public enum PresentationExchange {
         let vcJWTListMap: [VCDataModel] = try vcJWTList.map { vcJWT in
                 let parsedJWT  = try JWT.parse(jwtString: vcJWT)
                 guard let vcJSON = parsedJWT.payload["vc"]?.value as? [String: Any] else {
-                    throw Error.parseFailed
+                    throw Error.missingCredentialObject
                 }
 
                 let vcData = try JSONSerialization.data(withJSONObject: vcJSON)
@@ -198,9 +195,26 @@ public enum PresentationExchange {
         // If the VC passes all the checks, it satisfies the criteria of the Input Descriptor.
         return true
     }
-    
-    private static func validateFilter() {
-        
-    }
 
+}
+
+// MARK: - Errors
+extension PresentationExchange {
+    public enum Error: LocalizedError {
+        case missingCredentialObject
+        case missingCredentials(Int, Int)
+        
+        public var errorDescription: String? {
+            switch self {
+            case .missingCredentialObject:
+                return "Failed to find Verifiable Credential object in parsed JWT"
+            case .missingCredentials(let totalNeeded, let actualReceived):
+                return """
+                Missing input descriptors: The presentation definition requires
+                \(totalNeeded) descriptors, but only
+                \(actualReceived) were found. Check and provide the missing descriptors.
+                """
+            }
+        }
+    }
 }
