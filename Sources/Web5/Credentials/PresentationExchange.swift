@@ -173,7 +173,6 @@ public enum PresentationExchange {
                     ])
                     return result.valid
                 }
-                print(satisfiesSchemaMatches)
                 
                 if satisfiesSchemaMatches.isEmpty {
                     // If the field value does not satisfy the schema, the VC does not satisfy this Input Descriptor.

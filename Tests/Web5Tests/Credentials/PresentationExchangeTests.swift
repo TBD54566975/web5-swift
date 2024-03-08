@@ -5,7 +5,6 @@ import XCTest
 class PresentationExchangeTests: XCTestCase {
     
     func testSelectCredentialsWhenMatchesFound() throws {
-        // Given
         let vcJwt = """
         eyJraWQiOiJkaWQ6a2V5OnpRM3NoTkx0MWFNV1BiV1JHYThWb2VFYkpvZko3eEplNEZDUHBES3hxMU5aeWdwaXkjelEzc2hOTHQxYU1XUGJXUkdhOFZvZUViSm9mSjd4SmU0RkNQcERLeHExTlp5Z3BpeSIsInR5cCI6IkpXVCIsImFsZyI6IkVTMjU2SyJ9.eyJpc3MiOiJkaWQ6a2V5OnpRM3NoTkx0MWFNV1BiV1JHYThWb2VFYkpvZko3eEplNEZDUHBES3hxMU5aeWdwaXkiLCJzdWIiOiJkaWQ6a2V5OnpRM3Noa3BhdmpLUmV3b0JrNmFyUEpuaEE4N1p6aExERVdnVnZaS05ISzZRcVZKREIiLCJpYXQiOjE3MDEzMDI1OTMsInZjIjp7Imlzc3VhbmNlRGF0ZSI6IjIwMjMtMTEtMzBUMDA6MDM6MTNaIiwiY3JlZGVudGlhbFN1YmplY3QiOnsiaWQiOiJkaWQ6a2V5OnpRM3Noa3BhdmpLUmV3b0JrNmFyUEpuaEE4N1p6aExERVdnVnZaS05ISzZRcVZKREIiLCJsb2NhbFJlc3BlY3QiOiJoaWdoIiwibGVnaXQiOnRydWV9LCJpZCI6InVybjp1dWlkOjZjOGJiY2Y0LTg3YWYtNDQ5YS05YmZiLTMwYmYyOTk3NjIyNyIsInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJTdHJlZXRDcmVkIl0sIkBjb250ZXh0IjpbImh0dHBzOi8vd3d3LnczLm9yZy8yMDE4L2NyZWRlbnRpYWxzL3YxIl0sImlzc3VlciI6ImRpZDprZXk6elEzc2hOTHQxYU1XUGJXUkdhOFZvZUViSm9mSjd4SmU0RkNQcERLeHExTlp5Z3BpeSJ9fQ.qoqF4-FinFsQ2J-NFSO46xCE8kUTZqZCU5fYr6tS0TQ6VP8y-ZnyR6R3oAqLs_Yo_CqQi23yi38uDjLjksiD2w
         """
@@ -37,12 +36,8 @@ class PresentationExchangeTests: XCTestCase {
             ]
         )
         
-        // When
-            
         let result = try PresentationExchange.selectCredentials(vcJWTs: [vcJwt, vcJwt2], presentationDefinition: pd)
         
-        print(result)
-        // Then
         XCTAssertEqual(result, [vcJwt, vcJwt2])
     }
 }
