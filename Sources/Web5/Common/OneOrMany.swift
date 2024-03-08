@@ -33,6 +33,13 @@ public enum OneOrMany<T: Codable & Equatable>: Codable, Equatable {
             return nil
         }
     }
+    /*
+     {
+      thing: "thing",
+     "grab": {
+     "thing" : "thing"
+     }
+     */
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
