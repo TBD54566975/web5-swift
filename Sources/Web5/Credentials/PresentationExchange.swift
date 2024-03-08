@@ -98,6 +98,17 @@ public enum PresentationExchange {
         return inputDescriptorToVcMap.flatMap { $0.value }
     }
     
+    // MARK: - Satisfies Presentation Definition
+    public static func satisfiesPresentationDefinition(
+        vcJWTs: [String],
+        presentationDefinition: PresentationDefinitionV2
+    ) throws -> Void {
+        let inputDescriptorToVcMap = try selectCredentials(vcJWTs: vcJWTs, presentationDefinition: presentationDefinition)
+        guard inputDescriptorToVcMap.count > 0 else {
+            throw Error.parseFailed
+        }
+    }
+    
     public enum Error: LocalizedError {
         case parseFailed
     }
