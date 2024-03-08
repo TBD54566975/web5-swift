@@ -1,4 +1,3 @@
-import AnyCodable
 import Foundation
 
 /// Wrapper used to easily encode a `Date` to and decode a `Date` from an ISO 8601 formatted date string.
