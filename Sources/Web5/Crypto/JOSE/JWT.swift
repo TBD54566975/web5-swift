@@ -114,7 +114,6 @@ public struct JWT {
         
         let base64urlEncodedJwtHeader = String(parts[0])
         let base64urlEncodedJwtPayload = String(parts[1])
-        let _ = String(parts[2])
         
         let jwtHeader: JWS.Header = try JSONDecoder().decode(
             JWS.Header.self,

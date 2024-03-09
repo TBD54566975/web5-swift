@@ -105,7 +105,7 @@ public enum PresentationExchange {
     ) throws -> Void {
         let inputDescriptorToVcMap = try selectCredentials(vcJWTs: vcJWTs, presentationDefinition: presentationDefinition)
         guard inputDescriptorToVcMap.count == presentationDefinition.inputDescriptors.count else {
-            throw Error.missingCredentials(presentationDefinition.inputDescriptors.count, inputDescriptorToVcMap.count)
+            throw Error.missingDescriptors(presentationDefinition.inputDescriptors.count, inputDescriptorToVcMap.count)
         }
     }
 
@@ -201,13 +201,13 @@ public enum PresentationExchange {
 extension PresentationExchange {
     public enum Error: LocalizedError {
         case missingCredentialObject
-        case missingCredentials(Int, Int)
+        case missingDescriptors(Int, Int)
         
         public var errorDescription: String? {
             switch self {
             case .missingCredentialObject:
                 return "Failed to find Verifiable Credential object in parsed JWT"
-            case .missingCredentials(let totalNeeded, let actualReceived):
+            case .missingDescriptors(let totalNeeded, let actualReceived):
                 return """
                 Missing input descriptors: The presentation definition requires
                 \(totalNeeded) descriptors, but only
