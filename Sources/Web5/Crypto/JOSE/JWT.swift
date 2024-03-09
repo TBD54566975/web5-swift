@@ -125,7 +125,7 @@ public struct JWT {
             throw Error.verificationFailed("Expected JWT header to contain typ property set to JWT")
         }
 
-        guard let _ = jwtHeader.keyID else {
+        guard jwtHeader.keyID != nil else {
             throw Error.verificationFailed("Expected JWT header to contain kid")
         }
 
