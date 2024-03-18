@@ -1,4 +1,5 @@
 import Foundation
+import AnyCodable
 
 public struct JWT {
 
@@ -89,5 +90,64 @@ public struct JWT {
                 type: "JWT"
             )
         )
+    }
+
+    public struct ParsedJWT {
+        let header: JWS.Header
+        let payload: [String: AnyCodable]
+
+        public init(
+            header: JWS.Header,
+            payload: [String: AnyCodable]
+        ) {
+            self.header = header
+            self.payload = payload
+        }
+    }
+
+    public static func parse(jwtString: String) throws -> ParsedJWT {
+        let parts = jwtString.components(separatedBy: ".")
+
+        guard parts.count == 3 else {
+            throw Error.verificationFailed("Malformed JWT. Expected 3 parts. Got \(parts.count)")
+        }
+        
+        let base64urlEncodedJwtHeader = String(parts[0])
+        let base64urlEncodedJwtPayload = String(parts[1])
+        
+        let jwtHeader: JWS.Header = try JSONDecoder().decode(
+            JWS.Header.self,
+            from: try base64urlEncodedJwtHeader.decodeBase64Url()
+        )
+
+        guard jwtHeader.type == "JWT" else {
+            throw Error.verificationFailed("Expected JWT header to contain typ property set to JWT")
+        }
+
+        guard jwtHeader.keyID != nil else {
+            throw Error.verificationFailed("Expected JWT header to contain kid")
+        }
+
+        let jwtPayload = try JSONDecoder().decode(
+            [String: AnyCodable].self,
+            from: base64urlEncodedJwtPayload.decodeBase64Url()
+        )
+
+        return ParsedJWT(header: jwtHeader, payload: jwtPayload)
+    }
+}
+
+// MARK: - Errors
+
+extension JWT {
+    public enum Error: LocalizedError {
+        case verificationFailed(String)
+        
+        public var errorDescription: String? {
+            switch self {
+            case let .verificationFailed(reason):
+                return "Verification Failed: \(reason)"
+            }
+        }
     }
 }

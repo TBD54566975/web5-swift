@@ -21,6 +21,8 @@ let package = Package(
         .package(url: "https://github.com/allegro/swift-junit.git", from: "2.1.0"),
         .package(url: "https://github.com/flight-school/anycodable.git", from: "0.6.7"),
         .package(url: "https://github.com/Bouke/DNS.git", from: "1.2.0"),
+        .package(url: "https://github.com/KittyMac/Sextant.git", exact: "0.4.0"),
+        .package(url: "https://github.com/kylef/JSONSchema.swift.git", from: "0.6.0")
     ],
     targets: [
         .target(
@@ -30,6 +32,8 @@ let package = Package(
                 .product(name: "ExtrasBase64", package: "swift-extras-base64"),
                 .product(name: "AnyCodable", package: "anycodable"),
                 .product(name: "DNS", package: "DNS"),
+                .product(name: "Sextant", package: "sextant"),
+                .product(name: "JSONSchema", package: "jsonschema.swift")
             ]
         ),
         .testTarget(
