@@ -44,6 +44,11 @@ public struct CredentialSchema: Codable {
 
 public struct PresentationDefinitionV2: Codable {
     public let inputDescriptors: [InputDescriptorV2]
+    
+    enum CodingKeys: String, CodingKey {
+        case inputDescriptors = "input_descriptors"
+    }
+    
 }
 
 public struct InputDescriptorV2: Codable, Hashable {
@@ -95,7 +100,7 @@ public enum PresentationExchange {
         presentationDefinition: PresentationDefinitionV2
     ) throws -> [String] {
         let inputDescriptorToVcMap = try mapInputDescriptorsToVCs(vcJWTList: vcJWTs, presentationDefinition: presentationDefinition)
-        return inputDescriptorToVcMap.flatMap { $0.value }
+        return Array(Set(inputDescriptorToVcMap.flatMap { $0.value }))
     }
     
     // MARK: - Satisfies Presentation Definition
@@ -156,7 +161,6 @@ public enum PresentationExchange {
             // Takes field.path and queries the vc to see if there is a corresponding path.
             let vcJson = try JSONEncoder().encode(vc)
             guard let matchedPathValues = vcJson.query(values: field.path) else { return false }
-            
             
             if matchedPathValues.isEmpty {
                 // If no matching fields are found for a required field, the VC does not satisfy this Input Descriptor.
