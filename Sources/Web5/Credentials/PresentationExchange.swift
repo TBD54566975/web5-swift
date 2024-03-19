@@ -108,8 +108,9 @@ public enum PresentationExchange {
         vcJWTs: [String],
         presentationDefinition: PresentationDefinitionV2
     ) throws -> Void {
-        let inputDescriptorToVcMap = try selectCredentials(vcJWTs: vcJWTs, presentationDefinition: presentationDefinition)
-        guard inputDescriptorToVcMap.count == presentationDefinition.inputDescriptors.count else {
+        let inputDescriptorToVcMap = try mapInputDescriptorsToVCs(vcJWTList: vcJWTs, presentationDefinition: presentationDefinition)
+        let inputDescriptorToVcFlatMap = inputDescriptorToVcMap.flatMap { $0.value }
+        guard inputDescriptorToVcFlatMap.count == presentationDefinition.inputDescriptors.count else {
             throw Error.missingDescriptors(presentationDefinition.inputDescriptors.count, inputDescriptorToVcMap.count)
         }
     }
