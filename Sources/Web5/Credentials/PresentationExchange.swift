@@ -42,7 +42,7 @@ public struct CredentialSchema: Codable {
     public let type: String
 }
 
-public struct PresentationDefinitionV2: Codable {
+public struct PresentationDefinitionV2: Codable, Equatable {
     public let inputDescriptors: [InputDescriptorV2]
     
     enum CodingKeys: String, CodingKey {
