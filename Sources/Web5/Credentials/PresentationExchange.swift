@@ -43,20 +43,39 @@ public struct CredentialSchema: Codable {
 }
 
 public struct PresentationDefinitionV2: Codable, Equatable {
+    public let id: String
+    public let name: String?
+    public let purpose: String?
+    public let format: AnyCodable?
+    public let submissionRequirements: [AnyCodable]?
     public let inputDescriptors: [InputDescriptorV2]
     
     enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case purpose
+        case format
+        case submissionRequirements = "submission_requirements"
         case inputDescriptors = "input_descriptors"
     }
-    
 }
 
 public struct InputDescriptorV2: Codable, Hashable {
+    public let id: String
+    public let name: String?
+    public let purpose: String?
+    public let format: AnyCodable?
     public let constraints: ConstraintsV2
 }
 
 public struct ConstraintsV2: Codable, Hashable {
     public let fields: [FieldV2]?
+    public let limitDisclosure: Optionality?
+    
+    enum CodingKeys: String, CodingKey {
+        case fields
+        case limitDisclosure = "limit_disclosure"
+    }
 }
 
 public struct FieldV2: Codable, Hashable {

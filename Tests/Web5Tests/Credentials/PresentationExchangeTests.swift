@@ -13,6 +13,10 @@ class PresentationExchangeTests: XCTestCase {
     """
     
     let inputDescriptor = InputDescriptorV2(
+        id: "1234567890_a",
+        name: nil,
+        purpose: nil,
+        format: nil,
         constraints: ConstraintsV2(
             fields: [
                 FieldV2(
@@ -27,11 +31,16 @@ class PresentationExchangeTests: XCTestCase {
                     path: ["$.issuer"],
                     filter: ["type":"string", "const": "did:key:zQ3shNLt1aMWPbWRGa8VoeEbJofJ7xJe4FCPpDKxq1NZygpiy"]
                 )
-            ]
+            ],
+            limitDisclosure: nil
         )
     )
     
     let inputDescriptor2 = InputDescriptorV2(
+        id: "1234567890_b",
+        name: nil,
+        purpose: nil,
+        format: nil,
         constraints: ConstraintsV2(
             fields: [
                 FieldV2(
@@ -42,11 +51,16 @@ class PresentationExchangeTests: XCTestCase {
                     path: ["$.credentialSubject.localStreet"],
                     filter: ["type":"string", "const": "low"]
                 ),
-            ]
+            ],
+            limitDisclosure: nil
         )
     )
     
     let inputDescriptor3 = InputDescriptorV2(
+        id: "1234567890_c",
+        name: nil,
+        purpose: nil,
+        format: nil,
         constraints: ConstraintsV2(
             fields: [
                 FieldV2(
@@ -57,14 +71,18 @@ class PresentationExchangeTests: XCTestCase {
                     path: ["$.credentialSubject.localRespect"],
                     filter: ["type":"string", "const": "high"]
                 ),
-            ]
+            ],
+            limitDisclosure: nil
         )
     )
-        
-    //select_credentials - web5-spec select_credentials -> Web5TestVectors folder
-    
+            
     func test_select_oneOfTwoCorrectCredentials() throws {
         let pd = PresentationDefinitionV2(
+            id: "1234567890_d",
+            name: nil,
+            purpose: nil,
+            format: nil,
+            submissionRequirements: nil,
             inputDescriptors: [
                 inputDescriptor, inputDescriptor2
                 ]
@@ -76,6 +94,11 @@ class PresentationExchangeTests: XCTestCase {
     
     func test_throw_zeroCorrectCredentials() throws {
         let pd = PresentationDefinitionV2(
+            id: "1234567890_e",
+            name: nil,
+            purpose: nil,
+            format: nil,
+            submissionRequirements: nil,
             inputDescriptors: [
                 inputDescriptor, inputDescriptor2
                 ]
@@ -85,6 +108,11 @@ class PresentationExchangeTests: XCTestCase {
     
     func test_select_twoOfTwoCorrectCredentials() throws {
         let pd = PresentationDefinitionV2(
+            id: "1234567890_f",
+            name: nil,
+            purpose: nil,
+            format: nil,
+            submissionRequirements: nil,
             inputDescriptors: [
                 inputDescriptor3
                 ]
