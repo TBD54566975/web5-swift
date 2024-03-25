@@ -43,7 +43,7 @@ final class Web5TestVectorsPresentationExchange: XCTestCase {
                 /// Register each of the mock network responses
                 try vector.input.mocks().forEach { $0.register() }
 
-                /// Resolve each input didURI, make sure it matches output
+                /// Select valid credentials from each of the inputs, make sure it matches output
                 let result = try PresentationExchange.selectCredentials(vcJWTs: vector.input.credentialJwts, presentationDefinition: vector.input.presentationDefinition)
                 XCTAssertEqual(result.sorted(), vector.output!.selectedCredentials.sorted())
                 expectation.fulfill()
