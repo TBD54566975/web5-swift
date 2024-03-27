@@ -87,15 +87,14 @@ public enum DIDJWK {
     ) -> DIDDocument {
         let verifiationMethod = VerificationMethod(
             id: "\(did.uri)#0",
-            type: "JsonWebKey2020",
+            type: "JsonWebKey",
             controller: did.uri,
             publicKeyJwk: publicKey
         )
 
         return DIDDocument(
             context: .list([
-                .string("https://www.w3.org/ns/did/v1"),
-                .string("https://w3id.org/security/suites/jws-2020/v1"),
+                .string("https://www.w3.org/ns/did/v1")
             ]),
             id: did.uri,
             verificationMethod: [verifiationMethod],
