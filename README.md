@@ -49,3 +49,8 @@ To release a new version, initiate the `Release` workflow:
 ### Publishing Docs
 
 API reference documentation is automatically updated and available at [https://swiftpackageindex.com/TBD54566975/web5-swift/{latest-version}/documentation/web5](https://swiftpackageindex.com/TBD54566975/web5-swift/main/documentation/web5) following each release.
+
+### Additional Links
+
+- [API Reference Guide](https://swiftpackageindex.com/TBD54566975/web5-swift/main/documentation/web5)
+- [Developer Docs](https://developer.tbd.website/docs/)
