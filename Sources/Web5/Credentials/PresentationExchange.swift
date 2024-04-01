@@ -141,7 +141,7 @@ public enum PresentationExchange {
     ) throws -> [InputDescriptorV2: [String]] {
         let vcJWTListMap: [VCDataModel] = try vcJWTList.map { vcJWT in
                 let parsedJWT  = try JWT.parse(jwtString: vcJWT)
-                guard let vcJSON = parsedJWT.payload["vc"]?.value as? [String: Any] else {
+            guard let vcJSON = parsedJWT.payload.miscellaneous?["vc"]?.value as? [String: Any] else {
                     throw Error.missingCredentialObject
                 }
 

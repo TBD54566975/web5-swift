@@ -8,10 +8,21 @@ final class JWTTests: XCTestCase {
     func test_sign() throws {
         let did = try DIDJWK.create()
 
-        let claims = JWT.Claims(issuer: did.identifier)
+        let claims = JWT.Claims(
+            issuer: did.identifier,
+            expiration: Date.distantFuture,
+            misc: ["nonce": AnyCodable(Date.now.hashValue)]
+        )
         let jwt = try JWT.sign(did: did, claims: claims)
 
         XCTAssertFalse(jwt.isEmpty)
+        
+        let decoded = try JWT.parse(jwtString: jwt)
+        if let nonceValue = decoded.payload.miscellaneous?["foo"]?.value as? String {
+            print("Nonce value: \(nonceValue)")
+        } else {
+            print("Nonce value not found")
+        }
     }
 }
 
@@ -48,12 +59,11 @@ class JWTClaimsTests: XCTestCase {
             XCTAssertEqual(originalClaims.jwtID, decodedClaims.jwtID)
             
             // Log and compare custom claims
-            let originalMiscValue = originalClaims.miscellaneous["foo"]?.value as? String
-            let decodedMiscValue = decodedClaims.miscellaneous["foo"]?.value as? String
+            let originalMiscValue = originalClaims.miscellaneous?["foo"]?.value as? String
+            let decodedMiscValue = decodedClaims.miscellaneous?["foo"]?.value as? String
 
             if let originalMiscValue = originalMiscValue, let decodedMiscValue = decodedMiscValue {
-                XCTAssertEqual(originalMiscValue, decodedMiscValue, "Custom claims did not match.")
-                print("Original Misc Value: \(originalMiscValue), Decoded Misc Value: \(decodedMiscValue)")
+                XCTAssertEqual(originalMiscValue, decodedMiscValue, "Misc claims did not match.")
             } else {
                 XCTFail("Custom claims could not be found or did not match. Original: \(String(describing: originalMiscValue)), Decoded: \(String(describing: decodedMiscValue))")
             }
