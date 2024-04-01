@@ -57,7 +57,7 @@ public struct JWT {
             notBefore: Int? = nil,
             issuedAt: Int? = nil,
             jwtID: String? = nil,
-            misc: [String: AnyCodable] = [:]
+            misc: [String: AnyCodable]? = nil
         ) {
             self.issuer = issuer
             self.subject = subject
