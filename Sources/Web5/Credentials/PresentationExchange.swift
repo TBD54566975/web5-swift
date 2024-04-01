@@ -111,6 +111,30 @@ public enum Optionality: Codable {
     case preferred
 }
 
+public struct PresentationSubmission: Codable, Equatable {
+    public let id: String
+    public let definitionID: String
+    public let descriptorMap: [InputDescriptorMapping]
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case definitionID = "definition_id"
+        case descriptorMap = "descriptor_map"
+    }
+}
+
+public struct InputDescriptorMapping: Codable, Hashable {
+    public let id: String
+    public let format: String
+    public let path: String
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case format
+        case path
+    }
+}
+
 public enum PresentationExchange {
 
     // MARK: - Select Credentials
@@ -128,10 +152,58 @@ public enum PresentationExchange {
         presentationDefinition: PresentationDefinitionV2
     ) throws -> Void {
         let inputDescriptorToVcMap = try mapInputDescriptorsToVCs(vcJWTList: vcJWTs, presentationDefinition: presentationDefinition)
-        let inputDescriptorToVcFlatMap = inputDescriptorToVcMap.flatMap { $0.value }
-        guard inputDescriptorToVcFlatMap.count == presentationDefinition.inputDescriptors.count else {
+
+        guard inputDescriptorToVcMap.count == presentationDefinition.inputDescriptors.count else {
             throw Error.missingDescriptors(presentationDefinition.inputDescriptors.count, inputDescriptorToVcMap.count)
         }
+    }
+    
+    // MARK: - Create Presentation From Credentials
+    public static func createPresentationFromCredentials(
+        vcJWTs: [String],
+        presentationDefinition: PresentationDefinitionV2
+    ) throws -> PresentationSubmission {
+        // Make sure VCs satisfy the PD. Note: VCs should be result from `selectCredentials`
+        do { 
+            try satisfiesPresentationDefinition(
+                vcJWTs: vcJWTs,
+                presentationDefinition: presentationDefinition
+            )
+        } catch {
+            throw Error.reason("""
+                Credentials do not satisfy the provided PresentationDefinition.
+                Use `PresentationExchange.selectCredentials` and pass in the result to this method's `vcJWTs` argument.
+                """
+            )
+        }
+        
+        var descriptorMapList: [InputDescriptorMapping] = []
+        
+        // Get our inputDescriptor to VC jwt map
+        let inputDescriptorToVcMap = try mapInputDescriptorsToVCs(vcJWTList: vcJWTs, presentationDefinition: presentationDefinition)
+        
+        // Iterate through our inputDescriptors
+        for (inputDescriptor, vcMatches) in inputDescriptorToVcMap {
+            // Take the first match and get index
+            if let matchingIndex = vcJWTs.firstIndex(of: vcMatches[0]) {
+                descriptorMapList.append(
+                    InputDescriptorMapping(
+                        id: inputDescriptor.id,
+                        format: "jwt_vc",
+                        path: "$.verifiableCredential[\(matchingIndex)]"
+                    )
+                )
+            } else {
+                print("No matching JWT found")
+            }
+
+        }
+        
+        return PresentationSubmission(
+            id: UUID().uuidString,
+            definitionID: presentationDefinition.id,
+            descriptorMap: descriptorMapList
+        )
     }
 
     // MARK: - Map Input Descriptors to VCs
@@ -141,7 +213,7 @@ public enum PresentationExchange {
     ) throws -> [InputDescriptorV2: [String]] {
         let vcJWTListMap: [VCDataModel] = try vcJWTList.map { vcJWT in
                 let parsedJWT  = try JWT.parse(jwtString: vcJWT)
-            guard let vcJSON = parsedJWT.payload.miscellaneous?["vc"]?.value as? [String: Any] else {
+                guard let vcJSON = parsedJWT.payload.miscellaneous?["vc"]?.value as? [String: Any] else {
                     throw Error.missingCredentialObject
                 }
 
@@ -226,6 +298,7 @@ extension PresentationExchange {
     public enum Error: LocalizedError {
         case missingCredentialObject
         case missingDescriptors(Int, Int)
+        case reason(String)
         
         public var errorDescription: String? {
             switch self {
@@ -237,6 +310,8 @@ extension PresentationExchange {
                 \(totalNeeded) descriptors, but only
                 \(actualReceived) were found. Check and provide the missing descriptors.
                 """
+            case .reason(let reason):
+                return "Error: \(reason)"
             }
         }
     }
