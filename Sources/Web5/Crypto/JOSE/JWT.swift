@@ -53,18 +53,18 @@ public struct JWT {
             issuer: String? = nil,
             subject: String? = nil,
             audience: String? = nil,
-            expiration: Int? = nil,
-            notBefore: Int? = nil,
-            issuedAt: Int? = nil,
+            expiration: Date? = nil,
+            notBefore: Date? = nil,
+            issuedAt: Date? = nil,
             jwtID: String? = nil,
             misc: [String: AnyCodable]? = nil
         ) {
             self.issuer = issuer
             self.subject = subject
             self.audience = audience
-            self.expiration = expiration
-            self.notBefore = notBefore
-            self.issuedAt = issuedAt
+            self.expiration = expiration != nil ? Int(expiration!.timeIntervalSince1970) : nil
+            self.notBefore = notBefore != nil ? Int(notBefore!.timeIntervalSince1970) : nil
+            self.issuedAt = issuedAt != nil ? Int(issuedAt!.timeIntervalSince1970) : nil
             self.jwtID = jwtID
             self.miscellaneous = misc
         }

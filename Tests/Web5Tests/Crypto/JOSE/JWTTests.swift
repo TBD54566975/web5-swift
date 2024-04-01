@@ -1,5 +1,4 @@
 import XCTest
-import AnyCodable
 
 @testable import Web5
 
@@ -7,11 +6,10 @@ final class JWTTests: XCTestCase {
     
     func test_sign() throws {
         let did = try DIDJWK.create()
-        let future = Int(Date.distantFuture.timeIntervalSince1970)
 
         let claims = JWT.Claims(
             issuer: did.identifier,
-            expiration: future,
+            expiration: Date.distantFuture,
             misc: ["nonce": 123]
         )
         let jwt = try JWT.sign(did: did, claims: claims)
@@ -33,11 +31,11 @@ class JWTClaimsTests: XCTestCase {
             issuer: "issuer",
             subject: "subject",
             audience: "audience",
-            expiration: Int(Date.distantFuture.timeIntervalSince1970),
-            notBefore: Int(Date.distantPast.timeIntervalSince1970),
-            issuedAt: Int(Date().timeIntervalSince1970),
+            expiration: Date.distantFuture,
+            notBefore: Date.distantPast,
+            issuedAt: Date(),
             jwtID: "jwtID",
-            misc: ["foo": AnyCodable("bar")]
+            misc: ["foo": "bar"]
         )
 
         do {
