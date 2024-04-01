@@ -30,7 +30,7 @@ public enum DIDJWK {
     ///   - options: Options configuring how the DIDJWK is created
     /// - Returns: `BearerDID` that represents the created DIDJWK
     public static func create(
-        keyManager: KeyManager,
+        keyManager: KeyManager = InMemoryKeyManager(),
         options: CreateOptions = .default
     ) throws -> BearerDID {
         let keyAlias = try keyManager.generatePrivateKey(algorithm: options.algorithm)

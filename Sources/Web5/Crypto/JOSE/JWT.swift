@@ -26,23 +26,27 @@ public struct JWT {
         /// or after which the JWT must not be accepted for processing.
         ///
         /// [Spec](https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.4)
-        @ISO8601Date private(set) var expiration: Date?
+        let expiration: Int?
 
         /// The "nbf" (not before) claim identifies the time before which the JWT
         /// must not be accepted for processing.
         ///
         /// [Spec](https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.5)
-        @ISO8601Date private(set) var notBefore: Date?
+        let notBefore: Int?
 
         /// The "iat" (issued at) claim identifies the time at which the JWT was issued.
         ///
         /// [Spec](https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.6)
-        @ISO8601Date private(set) var issuedAt: Date?
+        let issuedAt: Int?
 
         /// The "jti" (JWT ID) claim provides a unique identifier for the JWT.
         ///
         /// [Spec](https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.7)
         let jwtID: String?
+
+        /// "misc" Miscellaneous claim is a map to store any additional claims
+        ///
+        var miscellaneous: [String: AnyCodable]?
 
         // Default Initializer
         public init(
@@ -52,18 +56,21 @@ public struct JWT {
             expiration: Date? = nil,
             notBefore: Date? = nil,
             issuedAt: Date? = nil,
-            jwtID: String? = nil
+            jwtID: String? = nil,
+            misc: [String: AnyCodable]? = nil
         ) {
             self.issuer = issuer
             self.subject = subject
             self.audience = audience
-            self.expiration = expiration
-            self.notBefore = notBefore
-            self.issuedAt = issuedAt
+            self.expiration = expiration != nil ? Int(expiration!.timeIntervalSince1970) : nil
+            self.notBefore = notBefore != nil ? Int(notBefore!.timeIntervalSince1970) : nil
+            self.issuedAt = issuedAt != nil ? Int(issuedAt!.timeIntervalSince1970) : nil
             self.jwtID = jwtID
+            self.miscellaneous = misc
         }
 
-        enum CodingKeys: String, CodingKey {
+
+        enum CodingKeys: String, CodingKey, CaseIterable {
             case issuer = "iss"
             case subject = "sub"
             case audience = "aud"
@@ -71,6 +78,63 @@ public struct JWT {
             case notBefore = "nbf"
             case issuedAt = "iat"
             case jwtID = "jti"
+        }
+        
+        public init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+
+            // Decode the known properties
+            issuer = try container.decodeIfPresent(String.self, forKey: .issuer)
+            subject = try container.decodeIfPresent(String.self, forKey: .subject)
+            audience = try container.decodeIfPresent(String.self, forKey: .audience)
+            expiration = try container.decodeIfPresent(Int.self, forKey: .expiration)
+            notBefore = try container.decodeIfPresent(Int.self, forKey: .notBefore)
+            issuedAt = try container.decodeIfPresent(Int.self, forKey: .issuedAt)
+            jwtID = try container.decodeIfPresent(String.self, forKey: .jwtID)
+
+            // Initialize the miscellaneous dictionary
+            var misc = [String: AnyCodable]()
+
+            // Extract all rawValues from CodingKeys for comparison
+            let knownKeysRawValues = CodingKeys.allCases.map { $0.rawValue }
+
+            // Dynamically decode keys not in CodingKeys
+            let dynamicContainer = try decoder.container(keyedBy: DynamicCodingKey.self)
+            for key in dynamicContainer.allKeys {
+                // Convert DynamicCodingKey to String
+                let keyString = key.stringValue
+                
+                // Skip keys that are part of the known CodingKeys
+                if !knownKeysRawValues.contains(keyString) {
+                    if let value = try? dynamicContainer.decode(AnyCodable.self, forKey: key) {
+                        misc[keyString] = value
+                    }
+                }         
+            }
+
+            miscellaneous = misc.isEmpty ? nil : misc
+        }
+        
+        public func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+
+            // Encode known properties
+            try container.encodeIfPresent(issuer, forKey: .issuer)
+            try container.encodeIfPresent(subject, forKey: .subject)
+            try container.encodeIfPresent(audience, forKey: .audience)
+            try container.encodeIfPresent(expiration, forKey: .expiration)
+            try container.encodeIfPresent(notBefore, forKey: .notBefore)
+            try container.encodeIfPresent(issuedAt, forKey: .issuedAt)
+            try container.encodeIfPresent(jwtID, forKey: .jwtID)
+
+            // Dynamically encode the miscellaneous properties at the top level
+            var dynamicContainer = encoder.container(keyedBy: DynamicCodingKey.self)
+            if let misc = miscellaneous {
+                for (key, value) in misc {
+                    let codingKey = DynamicCodingKey(stringValue: key)!
+                    try dynamicContainer.encode(value, forKey: codingKey)
+                }
+            }
         }
     }
 
@@ -94,11 +158,11 @@ public struct JWT {
 
     public struct ParsedJWT {
         let header: JWS.Header
-        let payload: [String: AnyCodable]
+        let payload: JWT.Claims
 
         public init(
             header: JWS.Header,
-            payload: [String: AnyCodable]
+            payload: JWT.Claims
         ) {
             self.header = header
             self.payload = payload
@@ -129,9 +193,9 @@ public struct JWT {
         }
 
         let jwtPayload = try JSONDecoder().decode(
-            [String: AnyCodable].self,
-            from: base64urlEncodedJwtPayload.decodeBase64Url()
-        )
+            JWT.Claims.self,
+            from: try base64urlEncodedJwtPayload.decodeBase64Url())
+
 
         return ParsedJWT(header: jwtHeader, payload: jwtPayload)
     }
@@ -149,5 +213,23 @@ extension JWT {
                 return "Verification Failed: \(reason)"
             }
         }
+    }
+}
+
+
+// MARK: - DynamicCodingKey
+// Define DynamicCodingKey to use for dynamic encoding
+struct DynamicCodingKey: CodingKey {
+    var stringValue: String
+    var intValue: Int?
+    
+    init?(stringValue: String) {
+        self.stringValue = stringValue
+        self.intValue = nil
+    }
+    
+    init?(intValue: Int) {
+        self.stringValue = "\(intValue)"
+        self.intValue = intValue
     }
 }
