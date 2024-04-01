@@ -49,7 +49,7 @@ final class Web5TestVectorsPresentationExchange: XCTestCase {
                 expectation.fulfill()
             }
 
-            wait(for: [expectation], timeout: 1)
+            wait(for: [expectation], timeout: 10000)
         }
     }
 

@@ -7,10 +7,13 @@ final class JWTTests: XCTestCase {
     
     func test_sign() throws {
         let did = try DIDJWK.create()
+        let future = Int64(Date.distantFuture.timeIntervalSince1970)
+        // convert future to Int
+
 
         let claims = JWT.Claims(
             issuer: did.identifier,
-            expiration: Date.distantFuture,
+            expiration: future,
             misc: ["nonce": AnyCodable(Date.now.hashValue)]
         )
         let jwt = try JWT.sign(did: did, claims: claims)
@@ -18,7 +21,7 @@ final class JWTTests: XCTestCase {
         XCTAssertFalse(jwt.isEmpty)
         
         let decoded = try JWT.parse(jwtString: jwt)
-        if let nonceValue = decoded.payload.miscellaneous?["foo"]?.value as? String {
+        if let nonceValue = decoded.payload.miscellaneous?["nonce"]?.value as? String {
             print("Nonce value: \(nonceValue)")
         } else {
             print("Nonce value not found")
@@ -33,22 +36,16 @@ class JWTClaimsTests: XCTestCase {
             issuer: "issuer",
             subject: "subject",
             audience: "audience",
-            expiration: Date(timeIntervalSince1970: 10000),
-            notBefore: Date(timeIntervalSince1970: 5000),
-            issuedAt: Date(timeIntervalSince1970: 0),
+            expiration: Int64(Date.distantFuture.timeIntervalSince1970),
+            notBefore: Int64(Date.distantPast.timeIntervalSince1970),
+            issuedAt: Int64(Date.now.timeIntervalSince1970),
             jwtID: "jwtID",
             misc: ["foo": AnyCodable("bar")]
         )
 
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .secondsSince1970
-
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .secondsSince1970
-
         do {
-            let encodedData = try encoder.encode(originalClaims)
-            let decodedClaims = try decoder.decode(JWT.Claims.self, from: encodedData)
+            let encodedClaims = try JSONEncoder().encode(originalClaims)
+            let decodedClaims = try JSONDecoder().decode(JWT.Claims.self, from: encodedClaims)
 
             XCTAssertEqual(originalClaims.issuer, decodedClaims.issuer)
             XCTAssertEqual(originalClaims.subject, decodedClaims.subject)

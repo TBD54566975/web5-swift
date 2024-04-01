@@ -15,7 +15,12 @@ struct FlatMap: Codable {
         if let mapValue = try? value.decode([String: AnyCodable].self) {
             wrappedValue = mapValue
         } else {
-            throw DecodingError.typeMismatch(Date.self, DecodingError.Context(codingPath: [], debugDescription: "TODO"))
+            throw DecodingError.typeMismatch(
+                FlatMap.self,
+                DecodingError.Context(
+                    codingPath: decoder.codingPath, debugDescription: "TODO"
+                )
+            )
         }
     }
 
