@@ -7,28 +7,25 @@ final class JWTTests: XCTestCase {
     
     func test_sign() throws {
         let did = try DIDJWK.create()
-        let future = Int64(Date.distantFuture.timeIntervalSince1970)
-        // convert future to Int
-
+        let future = Int(Date.distantFuture.timeIntervalSince1970)
 
         let claims = JWT.Claims(
             issuer: did.identifier,
             expiration: future,
-            misc: ["nonce": AnyCodable(Date.now.hashValue)]
+            misc: ["nonce": 123]
         )
         let jwt = try JWT.sign(did: did, claims: claims)
 
         XCTAssertFalse(jwt.isEmpty)
         
         let decoded = try JWT.parse(jwtString: jwt)
-        if let nonceValue = decoded.payload.miscellaneous?["nonce"]?.value as? String {
-            print("Nonce value: \(nonceValue)")
-        } else {
-            print("Nonce value not found")
-        }
+        let decodedNonceValue = decoded.payload.miscellaneous?["nonce"]?.value as? Int
+        XCTAssertEqual(decodedNonceValue, 123)
+        
     }
 }
 
+// todo consider adding more tests to verify encode and decode works as intended
 class JWTClaimsTests: XCTestCase {
 
     func testClaimsEncodingDecoding() {
@@ -36,9 +33,9 @@ class JWTClaimsTests: XCTestCase {
             issuer: "issuer",
             subject: "subject",
             audience: "audience",
-            expiration: Int64(Date.distantFuture.timeIntervalSince1970),
-            notBefore: Int64(Date.distantPast.timeIntervalSince1970),
-            issuedAt: Int64(Date.now.timeIntervalSince1970),
+            expiration: Int(Date.distantFuture.timeIntervalSince1970),
+            notBefore: Int(Date.distantPast.timeIntervalSince1970),
+            issuedAt: Int(Date.now.timeIntervalSince1970),
             jwtID: "jwtID",
             misc: ["foo": AnyCodable("bar")]
         )

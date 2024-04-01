@@ -26,18 +26,18 @@ public struct JWT {
         /// or after which the JWT must not be accepted for processing.
         ///
         /// [Spec](https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.4)
-        let expiration: Int64?
+        let expiration: Int?
 
         /// The "nbf" (not before) claim identifies the time before which the JWT
         /// must not be accepted for processing.
         ///
         /// [Spec](https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.5)
-        let notBefore: Int64?
+        let notBefore: Int?
 
         /// The "iat" (issued at) claim identifies the time at which the JWT was issued.
         ///
         /// [Spec](https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.6)
-        let issuedAt: Int64?
+        let issuedAt: Int?
 
         /// The "jti" (JWT ID) claim provides a unique identifier for the JWT.
         ///
@@ -53,9 +53,9 @@ public struct JWT {
             issuer: String? = nil,
             subject: String? = nil,
             audience: String? = nil,
-            expiration: Int64? = nil,
-            notBefore: Int64? = nil,
-            issuedAt: Int64? = nil,
+            expiration: Int? = nil,
+            notBefore: Int? = nil,
+            issuedAt: Int? = nil,
             jwtID: String? = nil,
             misc: [String: AnyCodable] = [:]
         ) {
@@ -87,9 +87,9 @@ public struct JWT {
             issuer = try container.decodeIfPresent(String.self, forKey: .issuer)
             subject = try container.decodeIfPresent(String.self, forKey: .subject)
             audience = try container.decodeIfPresent(String.self, forKey: .audience)
-            expiration = try container.decodeIfPresent(Int64.self, forKey: .expiration)
-            notBefore = try container.decodeIfPresent(Int64.self, forKey: .notBefore)
-            issuedAt = try container.decodeIfPresent(Int64.self, forKey: .issuedAt)
+            expiration = try container.decodeIfPresent(Int.self, forKey: .expiration)
+            notBefore = try container.decodeIfPresent(Int.self, forKey: .notBefore)
+            issuedAt = try container.decodeIfPresent(Int.self, forKey: .issuedAt)
             jwtID = try container.decodeIfPresent(String.self, forKey: .jwtID)
 
             // Initialize the miscellaneous dictionary
@@ -105,14 +105,11 @@ public struct JWT {
                 let keyString = key.stringValue
                 
                 // Skip keys that are part of the known CodingKeys
-                if knownKeysRawValues.contains(keyString) {
-                    continue
-                }
-                
-                // Attempt to decode AnyCodable for unknown keys
-                if let value = try? dynamicContainer.decode(AnyCodable.self, forKey: key) {
-                    misc[keyString] = value
-                }
+                if !knownKeysRawValues.contains(keyString) {
+                    if let value = try? dynamicContainer.decode(AnyCodable.self, forKey: key) {
+                        misc[keyString] = value
+                    }
+                }         
             }
 
             miscellaneous = misc.isEmpty ? nil : misc
