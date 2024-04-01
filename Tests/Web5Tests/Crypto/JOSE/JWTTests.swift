@@ -35,7 +35,7 @@ class JWTClaimsTests: XCTestCase {
             audience: "audience",
             expiration: Int(Date.distantFuture.timeIntervalSince1970),
             notBefore: Int(Date.distantPast.timeIntervalSince1970),
-            issuedAt: Int(Date.now.timeIntervalSince1970),
+            issuedAt: Int(Date().timeIntervalSince1970),
             jwtID: "jwtID",
             misc: ["foo": AnyCodable("bar")]
         )
