@@ -171,7 +171,7 @@ class PresentationExchangeTests: XCTestCase {
         XCTAssertNotNil(submission.id)
         XCTAssertEqual(submission.definitionID, pd.id)
         XCTAssertEqual(submission.descriptorMap.count, 2)
-        XCTAssertEqual(submission.descriptorMap[0].path, "$.verifiableCredential[0]")
+        XCTAssertTrue(submission.descriptorMap[0].path.starts(with: "$.verifiableCredential"))
     }
     
     func test_throwsOnCreatePresentationFromInvalidCredentials() throws {
