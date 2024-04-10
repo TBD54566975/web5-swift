@@ -7,6 +7,8 @@ final class Web5TestVectorsPortableDid: XCTestCase {
     func test_parse() throws {
         
         struct Output: Codable {}
+        /// TestVector Input could not be optional. 
+        /// We need an optional structure to temporary store incomplete did json
         struct OptionalPortableDid: Codable {
             typealias Metadata = [String: AnyCodable]
             let uri: String?

@@ -12,7 +12,7 @@ final class BearerDIDTests: XCTestCase {
         XCTAssertNoDifference(portableDID.uri, didJWK.uri)
         XCTAssertNoDifference(portableDID.document, didJWK.document)
         XCTAssertNoDifference(portableDID.privateKeys.count, 1)
-        XCTAssertNil(portableDID.metadata)
+        XCTAssertNoDifference(portableDID.metadata, [:])
     }
 
     func test_getSigner() throws {
