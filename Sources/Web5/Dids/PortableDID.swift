@@ -20,5 +20,5 @@ public struct PortableDID: Codable {
     let privateKeys: [Jwk]
 
     /// Additional DID method specific information to be included
-    let metadata: Metadata?
+    let metadata: Metadata
 }

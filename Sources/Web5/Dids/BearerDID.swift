@@ -105,7 +105,7 @@ public struct BearerDID {
             uri: did.uri,
             document: document,
             privateKeys: privateKeys,
-            metadata: metadata
+            metadata: metadata ?? [:]
         )
     }
 }
