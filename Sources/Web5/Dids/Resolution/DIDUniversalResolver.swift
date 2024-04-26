@@ -119,12 +119,9 @@ extension DIDUniversalResolver {
 
             if let didResource = didResource {
                 let metaData = DIDDereferencingMetadata(contentType: "application/did+json")
-                // To DO:
-                // Js universal-resolver.ts here put the didResolutionMetadata into contentMetadata
-                // check with TBD teams
                 return DIDDereferencingResult(dereferencingMetadata: metaData,
-                                            contentStream: didResource,
-                                            contentMetadata: didResolutionResult.didDocumentMetadata)
+                                              contentStream: didResource,
+                                              contentMetadata: didResolutionResult.didDocumentMetadata)
             } else {
                 return DIDDereferencingResult(error: DID.Error.notFound)
             }

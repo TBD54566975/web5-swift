@@ -31,8 +31,6 @@ public struct DIDDereferencingMetadata: Codable, Equatable {
    */
   var error: String?
 
-  // Additional output metadata generated during DID Resolution.
-//   var [key: string]: any;
 }
 
 
