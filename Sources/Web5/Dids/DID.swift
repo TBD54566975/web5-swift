@@ -13,6 +13,11 @@ public struct DID: Equatable {
         return uri.components(separatedBy: "#").first ?? uri
     }
 
+    /// DID URI without the query and fragment component
+    public var uriWithoutQueryAndFragment: String {
+        return uriWithoutFragment.components(separatedBy: "?").first ?? uriWithoutFragment
+    }
+
     /// DID method in the URI, which indicates the underlying method-specific
     /// identifier scheme (e.g.: `jwk`, `dht`, `web`, etc.)
     ///
@@ -137,5 +142,6 @@ extension DID {
 
     public enum Error: Swift.Error {
         case invalidURI
+        case notFound
     }
 }
