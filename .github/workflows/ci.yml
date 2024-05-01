@@ -26,7 +26,7 @@ jobs:
       run: swift test --enable-code-coverage
     
     - name: Convert the coverage data
-      run: llvm-cov export -format="lcov" .build/x86_64-apple-macosx/debug/Web5PackageTests.xctest/Contents/MacOS/Web5PackageTests -instr-profile .build/x86_64-apple-macosx/debug/codecov/default.profdata > info.lcov
+      run: llvm-cov export -format="lcov" .build/*-apple-macosx/debug/Web5PackageTests.xctest/Contents/MacOS/Web5PackageTests -instr-profile .build/*-apple-macosx/debug/codecov/default.profdata > info.lcov
 
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@c16abc29c95fcf9174b58eb7e1abf4c866893bc8 # 4.1.1
