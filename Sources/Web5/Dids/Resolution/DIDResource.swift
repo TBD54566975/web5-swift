@@ -7,12 +7,17 @@ public enum DIDResource: Codable, Equatable {
     
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
-        if let didDocument = try? container.decode(DIDDocument.self) {
-            self = .didDocument(didDocument)
-        } else if let verificationMethod = try? container.decode(VerificationMethod.self) {
+
+        /*
+            In DIDDocument, id is the only required property. All others are optional.
+            So DIDDocument must be decoded last.
+        */
+        if let verificationMethod = try? container.decode(VerificationMethod.self) {
             self = .verificationMethod(verificationMethod)
         } else if let referencedId = try? container.decode(Service.self) {
             self = .service(referencedId)
+        } else if let didDocument = try? container.decode(DIDDocument.self) {
+            self = .didDocument(didDocument)
         } else {
             throw DecodingError.typeMismatch(
                 DIDResource.self,
