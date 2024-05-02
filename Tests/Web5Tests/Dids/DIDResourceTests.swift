@@ -22,7 +22,7 @@ final class DIDResourceTests: XCTestCase {
         let did = try! DIDJWK.create()
         let didDocument = await DIDUniversalResolver.DIDResolver().resolve(didURI: did.uri).didDocument
         let resource = DIDResource.didDocument(didDocument!)
-        let encoded = try! JSONEncoder().encode(didDocument)
+        let encoded = try! JSONEncoder().encode(resource)
         let decoded = try! JSONDecoder().decode(DIDResource.self, from: encoded)
         XCTAssertEqual(decoded, resource)
     }

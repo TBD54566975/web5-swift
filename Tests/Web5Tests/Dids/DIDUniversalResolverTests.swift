@@ -90,4 +90,19 @@ final class DIDUniversalResolverTests: XCTestCase {
         XCTAssertNotNil(result.dereferencingMetadata.error)
         XCTAssertEqual(result.dereferencingMetadata.error, DID.Error.notFound.localizedDescription)
     }
+
+    func testRegisterResolver() async {
+
+        struct MockResolver: DIDMethodResolver {
+            public let methodName = "mock"
+            public func resolve(didURI: String) async -> DIDResolutionResult {
+                let metaData = DIDResolutionResult.Metadata(contentType: "this is mock resolver")
+                return DIDResolutionResult(didResolutionMetadata: metaData)
+            }
+        }
+
+        DIDUniversalResolver.register(resolver: MockResolver())
+        let result = await universalResolver.resolve(didURI: "did:mock:abc123")
+        XCTAssertEqual(result.didResolutionMetadata.contentType, "this is mock resolver")
+    }
 }
