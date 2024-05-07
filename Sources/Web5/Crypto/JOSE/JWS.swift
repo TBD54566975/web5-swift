@@ -231,7 +231,7 @@ public struct JWS {
             }
         }
 
-        let resolutionResult = await DIDResolver.resolve(didURI: signingDIDURI)
+        let resolutionResult = await DIDUniversalResolver().resolve(didURI: signingDIDURI)
 
         if let error = resolutionResult.didResolutionMetadata.error {
             throw Error.verifyError("Failed to resolve \(signingDIDURI) - \(error)")
