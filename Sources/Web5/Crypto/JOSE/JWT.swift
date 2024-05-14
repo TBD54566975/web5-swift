@@ -156,6 +156,56 @@ public struct JWT {
         )
     }
 
+    public static func verify(jwt: String) async throws {
+        let parsedJwt = try parse(jwtString: jwt)
+        
+        if let exp = parsedJwt.payload.expiration, 
+            Double(exp) > Date().timeIntervalSince1970 {
+            throw Error.verificationFailed("JWT has expired")
+        }
+
+        guard let keyId = parsedJwt.header.keyID else {
+            throw Error.verificationFailed("JWT has no keyID")
+        }
+
+        let dereferenceResult = await DIDUniversalResolver().dereference(didUrl: keyId)
+        if let error = dereferenceResult.dereferencingMetadata.error {
+            throw Error.verificationFailed(error)
+        }
+
+        guard let verificationMethod = dereferenceResult.contentStream?.value as? VerificationMethod,
+            DIDUtility.isDidVerificationMethod(obj: verificationMethod) else {
+            throw Error.verificationFailed("Expected kid in JWT header to dereference a DID Document Verification Method")
+        }
+        
+        guard let publicKeyJwk = verificationMethod.publicKeyJwk else {
+            throw Error.verificationFailed("Expected kid in JWT header to dereference to a DID Document Verification Method with publicKeyJwk")
+        }
+
+        if let algorithm = publicKeyJwk.algorithm, 
+            algorithm.jwsAlgorithm != parsedJwt.header.algorithm {
+            throw Error.verificationFailed("Expected alg in JWT header to match DID Document Verification Method alg")
+        }
+
+        let parts = jwt.components(separatedBy: ".")
+        guard parts.count == 3 else {
+            throw Error.verificationFailed("Malformed JWT. Expected 3 parts. Got \(parts.count)")
+        }
+
+        let signedData = "\(parts[0]).\(parts[1])";
+        guard let signedDataBytes = try? signedData.base64decoded(),
+            let signatureBytes = try? parts[2].base64decoded() else {
+                throw Error.verificationFailed("Failed to base64 decode JWT signature")
+        }
+    // const signatureBytes = Convert.base64Url(encodedJwt.signature).toUint8Array();
+
+        guard let isSignatureValid = try? Crypto.verify(payload: signedDataBytes, signature: signatureBytes, publicKey: publicKeyJwk),
+            isSignatureValid else {
+            throw Error.verificationFailed("Signature verification failed: Integrity mismatch")
+        }
+
+    }
+
     public struct ParsedJWT {
         let header: JWS.Header
         let payload: JWT.Claims
