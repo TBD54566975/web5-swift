@@ -254,7 +254,7 @@ public struct JWT {
 // MARK: - Errors
 
 extension JWT {
-    public enum Error: LocalizedError {
+    public enum Error: LocalizedError, Equatable {
         case verificationFailed(String)
         
         public var errorDescription: String? {
