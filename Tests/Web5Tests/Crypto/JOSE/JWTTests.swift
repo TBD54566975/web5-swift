@@ -21,6 +21,34 @@ final class JWTTests: XCTestCase {
         XCTAssertEqual(decodedNonceValue, 123)
         
     }
+
+    func test_parseJwt() throws {
+        do {
+            _ = try JWT.parse(jwtString: "abcd123")
+        } catch let error as JWT.Error {
+            XCTAssertEqual(error, JWT.Error.verificationFailed("Malformed JWT. Expected 3 parts. Got 1"))
+        }
+
+        do {
+            let header = JWS.Header(algorithm: .es256k, keyID: "keyID")
+            let base64UrlEncodedHeader = try JSONEncoder().encode(header).base64UrlEncodedString()
+             _ = try JWT.parse(jwtString: "\(base64UrlEncodedHeader).efgh.hijk")
+        } catch let error as JWT.Error {
+            XCTAssertEqual(error, JWT.Error.verificationFailed("Expected JWT header to contain typ property set to JWT"))
+        }
+
+        do {
+            let header = JWS.Header(algorithm: .es256k, type: "JWT")
+            let base64UrlEncodedHeader = try JSONEncoder().encode(header).base64UrlEncodedString()
+             _ = try JWT.parse(jwtString: "\(base64UrlEncodedHeader).efgh.hijk")
+        } catch let error as JWT.Error {
+            XCTAssertEqual(error, JWT.Error.verificationFailed("Expected JWT header to contain kid"))
+        }
+
+        let header = JWS.Header(algorithm: .es256k, keyID: "keyID", type: "JWT")
+        let base64UrlEncodedHeader = try JSONEncoder().encode(header).base64UrlEncodedString()
+        XCTAssertThrowsError(try JWT.parse(jwtString: "\(base64UrlEncodedHeader).efgh.hijk"))
+    }
 }
 
 // todo consider adding more tests to verify encode and decode works as intended
