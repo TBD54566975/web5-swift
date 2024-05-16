@@ -156,11 +156,11 @@ public struct JWT {
         )
     }
 
-    public static func verify(jwt: String) async throws {
+    public static func verify(jwt: String) async throws -> ParsedJWT {
         let parsedJwt = try parse(jwtString: jwt)
-        
+
         if let exp = parsedJwt.payload.expiration, 
-            Double(exp) > Date().timeIntervalSince1970 {
+            Date().timeIntervalSince1970 > Double(exp) {
             throw Error.verificationFailed("JWT has expired")
         }
 
@@ -192,18 +192,18 @@ public struct JWT {
             throw Error.verificationFailed("Malformed JWT. Expected 3 parts. Got \(parts.count)")
         }
 
-        let signedData = "\(parts[0]).\(parts[1])";
-        guard let signedDataBytes = try? signedData.base64decoded(),
-            let signatureBytes = try? parts[2].base64decoded() else {
-                throw Error.verificationFailed("Failed to base64 decode JWT signature")
+        let encodedHeaderAndPayload = [UInt8]("\(parts[0]).\(parts[1])".utf8);
+        guard let signature = try? parts[2].decodeBase64Url() else {
+            throw Error.verificationFailed("Failed to base64 decode JWT signature")
         }
-    // const signatureBytes = Convert.base64Url(encodedJwt.signature).toUint8Array();
+        let signatureBytes = [UInt8](signature)
 
-        guard let isSignatureValid = try? Crypto.verify(payload: signedDataBytes, signature: signatureBytes, publicKey: publicKeyJwk),
+        guard let isSignatureValid = try? Crypto.verify(payload: encodedHeaderAndPayload, signature: signatureBytes, publicKey: publicKeyJwk),
             isSignatureValid else {
             throw Error.verificationFailed("Signature verification failed: Integrity mismatch")
         }
 
+        return parsedJwt
     }
 
     public struct ParsedJWT {
