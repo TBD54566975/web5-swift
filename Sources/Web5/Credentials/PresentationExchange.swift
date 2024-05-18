@@ -8,8 +8,8 @@ public struct VCDataModel: Codable {
     public let id: String
     public let type: [String]
     public let issuer: String
-    public let issuanceDate: String
-    public let expirationDate: String?
+    public let issuanceDate: ISO8601Date
+    public let expirationDate: ISO8601Date?
     public let credentialSubject: [String: AnyCodable]
     public let credentialStatus: CredentialStatus?
     public let credentialSchema: CredentialSchema?

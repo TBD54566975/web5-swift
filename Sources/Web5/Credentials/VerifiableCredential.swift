@@ -16,9 +16,9 @@ public protocol VerifiableCredentialCreateOptions {
     /** The credential data, as a anycodable type. */
     var data: [String: AnyCodable]? { get set }
     /** The issuance date of the credential, as a string. */
-    var issuanceDate: String? { get set }
+    var issuanceDate: ISO8601Date? { get set }
     /** The expiration date of the credential, as a string. */
-    var expirationDate: String? { get set }
+    var expirationDate: ISO8601Date? { get set }
     /** The evidence of the credential, as an dicationary. */
     var evidence: [String: AnyCodable]? { get set }
 };
@@ -38,20 +38,6 @@ public struct VerifiableCredential {
         return vcDataModel.issuer
     }
 
-    public func date(from: String?) -> Date? {
-        if let dateString = from {
-            return ISO8601DateFormatter().date(from: dateString)            
-        }
-        return nil
-    }
-
-    public func dateString(from: Date?) -> String? {
-        if let date = from {
-            return ISO8601DateFormatter().string(from: date)
-        }
-        return nil
-    }
-
     public func subject() -> String {
         if let id = vcDataModel.credentialSubject["id"]?.value as? String {
             return id
@@ -60,12 +46,10 @@ public struct VerifiableCredential {
     }
 
     public func sign(did: BearerDID) async throws -> String {
-        let expirationDate = date(from: vcDataModel.expirationDate)
-        let issuanceDate = date(from: vcDataModel.issuanceDate)
         let claims = JWT.Claims(issuer: vcDataModel.issuer, 
                                 subject: subject(), 
-                                expiration: expirationDate, 
-                                notBefore: issuanceDate, 
+                                expiration: vcDataModel.expirationDate?.wrappedValue, 
+                                notBefore: vcDataModel.issuanceDate.wrappedValue, 
                                 issuedAt: Date(), 
                                 jwtID: did.did.uri,
                                 misc: ["vc": AnyCodable(vcDataModel)])
@@ -87,7 +71,7 @@ public struct VerifiableCredential {
             id: "urn:uuid:\(UUID().uuidString)",
             type: ["VerifiableCredential"] + options.type,
             issuer: options.issuer,
-            issuanceDate: options.issuanceDate ?? ISO8601DateFormatter().string(from: Date()),
+            issuanceDate: options.issuanceDate ?? ISO8601Date(wrappedValue: Date()),
             expirationDate: options.expirationDate,
             credentialSubject: credentialSubject,
             credentialStatus: nil,

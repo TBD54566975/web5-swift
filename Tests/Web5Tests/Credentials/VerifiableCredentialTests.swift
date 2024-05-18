@@ -15,8 +15,8 @@ class VerifiableCredentialTests: XCTestCase {
         var issuer: String
         var subject: String
         var data: [String: AnyCodable]?
-        var issuanceDate: String?
-        var expirationDate: String?
+        var issuanceDate: ISO8601Date?
+        var expirationDate: ISO8601Date?
         var evidence: [String: AnyCodable]?
     }
 

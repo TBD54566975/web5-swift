@@ -6,8 +6,6 @@ public class SsiValidator {
         try validate(context: vc.vcDataModel.context);
         try validate(vcType: vc.vcDataModel.type);
         try validate(credentialSubject: vc.vcDataModel.credentialSubject);
-        try validate(timestamp: vc.vcDataModel.issuanceDate)
-        if let expirationDate = vc.vcDataModel.expirationDate { try validate(timestamp: expirationDate) }
     }
 
     static func validate(context: [String]) throws {
@@ -26,31 +24,6 @@ public class SsiValidator {
         if credentialSubject.isEmpty {
             throw SsiValidator.Error.emptyCredentialSubject
         }
-    }
-
-    static func validate(timestamp: String) throws {
-        if !isValidISO8601(timestamp) {
-            throw SsiValidator.Error.invalidTimestamp
-        }
-    }
-
-    static func isValidISO8601(_ string: String) -> Bool {
-        let formats = [ // Add more formats if needed
-            "yyyy-MM-dd",
-            "yyyy-MM-dd'T'HH:mm:ss",
-            "yyyy-MM-dd'T'HH:mm:ss.SSS",
-            "yyyy-MM-dd'T'HH:mm:ssZ",
-            "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
-        ]
-        
-        for format in formats {
-            let formatter = DateFormatter()
-            formatter.dateFormat = format
-            if formatter.date(from: string) != nil {
-            return true
-            }
-        }
-        return false
     }
 
 }

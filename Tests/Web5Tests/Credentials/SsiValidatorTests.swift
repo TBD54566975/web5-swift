@@ -33,13 +33,4 @@ class SsiValidatorTests: XCTestCase {
         XCTAssertNoThrow(try SsiValidator.validate(credentialSubject: ["id":"did:example:123"]))
     }
 
-    func test_validateTimeStamp() throws {
-        do {
-            try SsiValidator.validate(timestamp: "invalid-timestamp")
-        } catch let err {
-            XCTAssertEqual(err as! SsiValidator.Error, SsiValidator.Error.invalidTimestamp)
-        }
-        let validTimestamp = "2022-08-28T12:34:56Z"
-        XCTAssertNoThrow(try SsiValidator.validate(timestamp: validTimestamp))
-    }
 }
