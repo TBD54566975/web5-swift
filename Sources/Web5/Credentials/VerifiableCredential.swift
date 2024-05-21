@@ -51,7 +51,7 @@ public struct VerifiableCredential {
                                 expiration: vcDataModel.expirationDate?.wrappedValue, 
                                 notBefore: vcDataModel.issuanceDate.wrappedValue, 
                                 issuedAt: Date(), 
-                                jwtID: did.did.uri,
+                                jwtID: vcDataModel.id,
                                 misc: ["vc": AnyCodable(vcDataModel)])
         let vcJwt = try JWT.sign(did: did, claims: claims)
         return vcJwt
@@ -84,4 +84,115 @@ public struct VerifiableCredential {
         return vc
     }
 
+}
+
+// Verify
+extension VerifiableCredential {
+    // verify: Runs all verification checks.
+    public static func verify(jwt: String) async throws {
+        let payload = try await JWT.verify(jwt: jwt).payload
+        try _verifyVCDataModel(payload: payload)
+        try _verifyExpiration(payload: payload)
+        try _verifyIssuer(payload: payload)
+        try _verifyNotBeforeDate(payload: payload)
+        try _verifySubject(payload: payload)
+        try _verifyJwtId(payload: payload)
+    }
+
+    // verifyExpiration: Checks the VC expiration date to ensure it is still valid.
+    private static func _verifyExpiration(payload: JWT.Claims) throws {
+        guard let exp = payload.expiration else { return }
+
+        guard let vcdm = try? getVcDataModel(payload: payload), 
+            let vcExp = vcdm.expirationDate?.wrappedValue?.timeIntervalSince1970,
+            Int(vcExp) == exp else {
+            throw Error.verificationFailed("exp claim does not match expirationDate")
+        }
+    }
+
+    private static func _verifyNotBeforeDate(payload: JWT.Claims) throws {
+        guard let nbf = payload.notBefore else { return }
+
+        // nbf cannot represent time in the future
+        guard nbf <= Int(Date().timeIntervalSince1970) else {
+            throw Error.verificationFailed("nbf claim is in the future")
+        }
+
+        // nbf MUST represent issuanceDate
+        if let vcdm = try? getVcDataModel(payload: payload),
+            let vcIss = vcdm.issuanceDate.wrappedValue?.timeIntervalSince1970, 
+            nbf != Int(vcIss) {
+                throw Error.verificationFailed("nbf claim does not match issuanceDate")
+        }
+    }
+
+    // verifyTrustedIssuer: Will accept options for a list of trusted issuer dids ⚠️
+    private static func _verifyIssuer(payload: JWT.Claims) throws {
+        guard let vcdm = try? getVcDataModel(payload: payload), 
+            let issuer = payload.issuer,
+            vcdm.issuer == issuer else {
+            throw Error.verificationFailed("iss claim does not match expected issuer")
+        }
+    }
+
+    private static func _verifySubject(payload: JWT.Claims) throws {
+        guard let subject = payload.subject else { return }
+
+        guard let vcdm = try? getVcDataModel(payload: payload),
+            vcdm.credentialSubject["id"]?.value as? String == subject else {
+            throw Error.verificationFailed("sub claim does not match expected subject")
+        }
+    }
+
+    private static func _verifyJwtId(payload: JWT.Claims) throws {
+        guard let jwtID = payload.jwtID else { return }
+
+        guard let vcdm = try? getVcDataModel(payload: payload),
+            vcdm.id == jwtID else {
+            throw Error.verificationFailed("jti claim does not match expected id")
+        }
+    
+    }
+    // verifySchema: Ensures that the VC conforms to a specified schema.
+    // verifyVcDataModel: Verifies if it is a valid VC data model, confirming the VC's structural compliance with the relevant standards.
+    private static func _verifyVCDataModel(payload: JWT.Claims) throws {
+        let vcdm = try getVcDataModel(payload: payload)
+        try SsiValidator.validate(context: vcdm.context)
+        try SsiValidator.validate(vcType: vcdm.type)
+        try SsiValidator.validate(credentialSubject: vcdm.credentialSubject)
+    }
+
+    private static func getVcDataModel(payload: JWT.Claims) throws -> VCDataModel {
+        guard let anycodableVC = payload.miscellaneous?["vc"] as? AnyCodable,
+               let dictionary = anycodableVC.value as? [String: Any],
+               let jsonData = try? JSONSerialization.data(withJSONObject: dictionary, options: []),
+               let vcDataModel = try? JSONDecoder().decode(VCDataModel.self, from: jsonData)
+                 else {
+            throw Error.verificationFailed("Expected vc in JWT payload")
+         }
+         return vcDataModel
+    }
+
+    // TO DO
+    // verifyStatus: Checks if the status list credential exists and if it is valid or revoked.
+    // verifyIntegrity: Performs a JWT integrity check to ensure it adheres to expected formatting and contains all necessary elements. These include header verification, payload structure, and encoding checks.
+    // verifySignature: Cryptographic verification of the JWT's signature to confirm its authenticity. This involves resolving the issuer's DID, retrieving the corresponding public key, and using it to verify the signature against the JWT's payload. These include did resolution, signature verification and algorithm verification
+
+}
+
+// Parse
+extension VerifiableCredential {
+    public static func parse(jwt: String) throws -> VerifiableCredential {
+        let jwt = try JWT.parse(jwtString: jwt)
+        let vcDataModel = try getVcDataModel(payload: jwt.payload)
+        let vc = VerifiableCredential(vcDataModel: vcDataModel)
+        try SsiValidator.validateCredentialPayload(vc: vc)
+        return vc
+    }
+}
+
+extension VerifiableCredential {
+    enum Error: Swift.Error {
+        case verificationFailed(String)
+    }
 }
