@@ -4,9 +4,16 @@ import Foundation
 @propertyWrapper
 public struct ISO8601Date: Codable {
     public var wrappedValue: Date?
+    public var dateString: String? {
+        return wrappedValue != nil ? ISO8601DateFormatter().string(from: wrappedValue!) : nil    
+    }
 
     public init(wrappedValue: Date?) {
         self.wrappedValue = wrappedValue
+    }
+
+    public init(dateString: String) {
+        wrappedValue = ISO8601DateFormatter().date(from: dateString)
     }
 
     public init(from decoder: Decoder) throws {

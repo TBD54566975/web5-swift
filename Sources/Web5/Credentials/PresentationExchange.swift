@@ -13,7 +13,7 @@ public struct VCDataModel: Codable {
     public let credentialSubject: [String: AnyCodable]
     public let credentialStatus: CredentialStatus?
     public let credentialSchema: CredentialSchema?
-    public let evidence: [String: AnyCodable]?
+    public let evidence: [[String: AnyCodable]]?
     
     enum CodingKeys: String, CodingKey {
         case context = "@context"

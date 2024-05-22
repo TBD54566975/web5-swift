@@ -15,12 +15,14 @@ public protocol VerifiableCredentialCreateOptions {
     var subject: String { get set }
     /** The credential data, as a anycodable type. */
     var data: [String: AnyCodable]? { get set }
-    /** The issuance date of the credential, as a string. */
+    /** The issuance date of the credential, as a ISO8601Date. */
     var issuanceDate: ISO8601Date? { get set }
-    /** The expiration date of the credential, as a string. */
+    /** The expiration date of the credential, as a ISO8601Date. */
     var expirationDate: ISO8601Date? { get set }
-    /** The evidence of the credential, as an dicationary. */
-    var evidence: [String: AnyCodable]? { get set }
+    /** The schema of the credential. */
+    var credentialSchema: CredentialSchema? { get set }
+    /** The evidence of the credential, as an array of dicationary. */
+    var evidence: [[String: AnyCodable]]? { get set }
 };
 
 public struct VerifiableCredential {
@@ -46,7 +48,7 @@ public struct VerifiableCredential {
     }
 
     public func sign(did: BearerDID) async throws -> String {
-        let claims = JWT.Claims(issuer: vcDataModel.issuer, 
+        let claims = JWT.Claims(issuer: did.did.uri, 
                                 subject: subject(), 
                                 expiration: vcDataModel.expirationDate?.wrappedValue, 
                                 notBefore: vcDataModel.issuanceDate.wrappedValue, 
@@ -75,7 +77,7 @@ public struct VerifiableCredential {
             expirationDate: options.expirationDate,
             credentialSubject: credentialSubject,
             credentialStatus: nil,
-            credentialSchema: nil,
+            credentialSchema: options.credentialSchema,
             evidence: options.evidence
         )
 
@@ -192,7 +194,7 @@ extension VerifiableCredential {
 }
 
 extension VerifiableCredential {
-    enum Error: Swift.Error {
+    enum Error: Swift.Error, Equatable {
         case verificationFailed(String)
     }
 }
