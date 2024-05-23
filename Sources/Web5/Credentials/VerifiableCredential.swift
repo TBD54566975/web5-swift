@@ -60,6 +60,9 @@ public struct VerifiableCredential {
     }
 
     public static func create(options: VerifiableCredentialCreateOptions) throws -> VerifiableCredential {
+        guard options.issuer.count > 0, options.subject.count > 0 else {
+            throw Error.verificationFailed("Issuer and subject must be defined")
+        }
         var credentialSubject: [String: AnyCodable] = ["id": AnyCodable(options.subject)]
         if let data = options.data {
             for (key, value) in data {

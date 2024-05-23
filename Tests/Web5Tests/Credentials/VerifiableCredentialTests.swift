@@ -3,12 +3,12 @@ import AnyCodable
 @testable import Web5
 
 class VerifiableCredentialTests: XCTestCase {
-    struct TBDeveloper {
+    private struct TBDeveloper {
         let name: String
-        let role: String
+        let isRemote: Bool
     }
 
-    struct VCCOptions: VerifiableCredentialCreateOptions {
+    private struct VCCOptions: VerifiableCredentialCreateOptions {
         var type: [String]
         var issuer: String
         var subject: String
@@ -33,39 +33,32 @@ class VerifiableCredentialTests: XCTestCase {
         return arr
     }
 
+    private func validVCCOptions(didUri: String) -> VCCOptions {
+        let options = VCCOptions(type: ["TBDeveloperCredential"], 
+                                 issuer: didUri, 
+                                 subject: didUri,
+                                 data: convert(source: [TBDeveloper(name: "alice", isRemote: true)]).first!)
+        return options
+    }
+
     func test_CreateVC() throws {
         
-        struct StreetCredibility {
-            let localRespect: String
-            let legit: Bool
-        }
-
         let issuerDid = try! DIDJWK.create();
-        let sc = StreetCredibility(localRespect: "high", legit: true)
-        let options = VCCOptions(type: ["StreetCred"], 
-                                 issuer: issuerDid.did.uri, 
-                                 subject: issuerDid.did.uri,
-                                 data: convert(source: [sc]).first!)
-
-        let vc = try VerifiableCredential.create(options: options)
+        let vc = try VerifiableCredential.create(options: validVCCOptions(didUri: issuerDid.did.uri))
 
         XCTAssertEqual(vc.issuer(), issuerDid.did.uri)
         XCTAssertEqual(vc.subject(), issuerDid.did.uri)
-        XCTAssertEqual(vc.type(), "StreetCred")
+        XCTAssertEqual(vc.type(), "TBDeveloperCredential")
         XCTAssertNotNil(vc.vcDataModel.issuanceDate)
         XCTAssertEqual(vc.vcDataModel.credentialSubject["id"]?.value as! String, issuerDid.did.uri)
-        XCTAssertEqual(vc.vcDataModel.credentialSubject["localRespect"]?.value as! String, "high")
-        XCTAssertEqual(vc.vcDataModel.credentialSubject["legit"]?.value as! Bool, true)
+        XCTAssertEqual(vc.vcDataModel.credentialSubject["name"]?.value as! String, "alice")
+        XCTAssertEqual(vc.vcDataModel.credentialSubject["isRemote"]?.value as! Bool, true)
 
     }
 
     func test_createAndSignVCWithDidJWk() async throws {
         let issuerDid = try! DIDJWK.create();
-        let options = VCCOptions(type: ["TBDeveloperCredential"], 
-                                 issuer: issuerDid.did.uri, 
-                                 subject: issuerDid.did.uri,
-                                 data: convert(source: [TBDeveloper(name: "alice", role: "software engineer")]).first!)
-        let vc = try VerifiableCredential.create(options: options)
+        let vc = try VerifiableCredential.create(options: validVCCOptions(didUri: issuerDid.did.uri))
         let vcJwt = try await vc.sign(did: issuerDid)
         try await VerifiableCredential.verify(jwt: vcJwt)
         let parsedVC = try VerifiableCredential.parse(jwt: vcJwt)
@@ -76,7 +69,7 @@ class VerifiableCredentialTests: XCTestCase {
             XCTAssertNotNil(currentVC.vcDataModel.issuanceDate)
             XCTAssertEqual(currentVC.vcDataModel.credentialSubject["id"]?.value as! String, issuerDid.did.uri)
             XCTAssertEqual(currentVC.vcDataModel.credentialSubject["name"]?.value as! String, "alice")
-            XCTAssertEqual(currentVC.vcDataModel.credentialSubject["role"]?.value as! String, "software engineer")
+            XCTAssertEqual(currentVC.vcDataModel.credentialSubject["isRemote"]?.value as! Bool, true)
         }
     }
 
@@ -151,11 +144,8 @@ class VerifiableCredentialTests: XCTestCase {
                                             subjectPresence: "Physical", 
                                             documentPresence: "Physical", 
                                             licenseNumber: "123AB4567")
-        let options = VCCOptions(type: ["TBDeveloperCredential"], 
-                                 issuer: issuerDid.did.uri, 
-                                 subject: issuerDid.did.uri,
-                                 data: convert(source: [TBDeveloper(name: "bob", role: "test engineer")]).first!,
-                                 evidence: convert(source: [evidence]))
+        var options = validVCCOptions(didUri: issuerDid.did.uri)
+        options.evidence = convert(source: [evidence])
         let vc = try VerifiableCredential.create(options: options)
         let vcJwt = try await vc.sign(did: issuerDid)
         try await VerifiableCredential.verify(jwt: vcJwt)
@@ -167,8 +157,8 @@ class VerifiableCredentialTests: XCTestCase {
             XCTAssertEqual(currentVC.type(), "TBDeveloperCredential")
             XCTAssertNotNil(currentVC.vcDataModel.issuanceDate)
             XCTAssertEqual(currentVC.vcDataModel.credentialSubject["id"]?.value as! String, issuerDid.did.uri)
-            XCTAssertEqual(currentVC.vcDataModel.credentialSubject["name"]?.value as! String, "bob")
-            XCTAssertEqual(currentVC.vcDataModel.credentialSubject["role"]?.value as! String, "test engineer")
+            XCTAssertEqual(currentVC.vcDataModel.credentialSubject["name"]?.value as! String, "alice")
+            XCTAssertEqual(currentVC.vcDataModel.credentialSubject["isRemote"]?.value as! Bool, true)
             XCTAssertEqual(vc.vcDataModel.evidence?.first?["id"]?.value as! String, evidence.id)
             XCTAssertEqual(vc.vcDataModel.evidence?.first?["type"]?.value as! [String], evidence.type)
             XCTAssertEqual(vc.vcDataModel.evidence?.first?["verifier"]?.value as! String, evidence.verifier)
@@ -182,12 +172,7 @@ class VerifiableCredentialTests: XCTestCase {
         
         let issuer1 = try! DIDJWK.create();
         let issuer2 = try! DIDJWK.create();
-        let options = VCCOptions(type: ["TBDeveloperCredential"], 
-                                 issuer: issuer1.did.uri, 
-                                 subject: "did:subject:123",
-                                 data: convert(source: [TBDeveloper(name: "bob", role: "test engineer")]).first!)
-
-        let vc = try VerifiableCredential.create(options: options)
+        let vc = try VerifiableCredential.create(options: validVCCOptions(didUri: issuer1.did.uri))
         let vcJwt = try await vc.sign(did: issuer2)
         do {
             try await VerifiableCredential.verify(jwt: vcJwt)
@@ -195,5 +180,108 @@ class VerifiableCredentialTests: XCTestCase {
             XCTAssertEqual(err as! VerifiableCredential.Error, VerifiableCredential.Error.verificationFailed("iss claim does not match expected issuer"))
         }
 
+    }
+
+    func test_throwIfIssuerOrSubjectUndefined() async throws {
+        let issuerDid = "did:example:issuer"
+        let subjectDid = "did:example:subject"
+        var options = validVCCOptions(didUri: subjectDid)
+        options.issuer = ""
+        do {
+            _ = try VerifiableCredential.create(options: options)
+        } catch let err {
+            XCTAssertEqual(err as! VerifiableCredential.Error, VerifiableCredential.Error.verificationFailed("Issuer and subject must be defined"))
+        }
+
+        options.issuer = issuerDid
+        options.subject = ""
+        do {
+            _ = try VerifiableCredential.create(options: options)
+        } catch let err {
+            XCTAssertEqual(err as! VerifiableCredential.Error, VerifiableCredential.Error.verificationFailed("Issuer and subject must be defined"))
+        }
+    }
+
+    func test_signEd25519KeyWorks() async throws {
+        let issuerDid = try! DIDJWK.create();
+        let vc = try VerifiableCredential.create(options: validVCCOptions(didUri: issuerDid.did.uri))
+        let vcJwt = try await vc.sign(did: issuerDid)
+        XCTAssertNotNil(vcJwt)
+        let parts = vcJwt.split(separator: ".")
+        XCTAssertTrue(parts.count == 3)
+    }
+
+    func test_signSecp256k1KeyWorks() async throws {
+        let issuerDid = try! DIDJWK.create(options: DIDJWK.CreateOptions(algorithm: .secp256k1));
+        let vc = try VerifiableCredential.create(options: validVCCOptions(didUri: issuerDid.did.uri))
+        let vcJwt = try await vc.sign(did: issuerDid)
+        XCTAssertNotNil(vcJwt)
+        let parts = vcJwt.split(separator: ".")
+        XCTAssertTrue(parts.count == 3)
+    }
+
+    func test_throwIfInvalidJwt() async throws {
+        do {
+            _ = try VerifiableCredential.parse(jwt: "Hi")
+        } catch let error {
+            XCTAssertEqual(error as! JWT.Error, JWT.Error.verificationFailed("Malformed JWT. Expected 3 parts. Got 1"))
+        }
+    }
+
+    func test_throwIfParseJwtMissingVCProperty() async throws {
+        let did = try! DIDJWK.create();
+        let jwt = try JWT.sign(did: did, claims: JWT.Claims(issuer: did.did.uri, subject: did.did.uri))
+        do {
+            _ = try VerifiableCredential.parse(jwt: jwt)
+        } catch let error {
+            XCTAssertEqual(VerifiableCredential.Error.verificationFailed("Expected vc in JWT payload"), error as! VerifiableCredential.Error)
+        }
+    }
+
+    func test_parseJwtSuccessReturnsVC() async throws {
+        let issuerDid = try! DIDJWK.create();
+        let vc = try VerifiableCredential.create(options: validVCCOptions(didUri: issuerDid.did.uri))
+        let vcJwt = try await vc.sign(did: issuerDid)
+        let parsedVC = try VerifiableCredential.parse(jwt: vcJwt)
+        XCTAssertNotNil(parsedVC)
+        XCTAssertEqual(parsedVC.issuer(), vc.issuer())
+        XCTAssertEqual(parsedVC.subject(), vc.subject())
+        XCTAssertEqual(parsedVC.type(), vc.type())
+    }
+
+    func test_failsToVerifyInvalidVCJwt() async throws {
+        do {
+            _ = try VerifiableCredential.parse(jwt: "invalid-jwt")
+        } catch let error {
+            XCTAssertEqual(JWT.Error.verificationFailed("Malformed JWT. Expected 3 parts. Got 1"), error as! JWT.Error)
+        }
+    }
+
+    func test_throwIfAlgNotSupport() async throws {
+        let invalidJwt =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
+
+        do {
+            _ = try VerifiableCredential.parse(jwt: invalidJwt)
+        } catch let error {
+            //This is swift decoding error. Does not support HS256
+            XCTAssertNotNil(error)
+        }
+    }
+
+    func test_verifyDoesNotThrowWithValidVC() async throws {
+        let issuerDid = try! DIDJWK.create();
+        let vc = try VerifiableCredential.create(options: validVCCOptions(didUri: issuerDid.did.uri))
+        let vcJwt = try await vc.sign(did: issuerDid)
+
+        let expectation = expectation(description: "VerifiableCredential should verify successfully")
+
+        do {
+            try await VerifiableCredential.verify(jwt: vcJwt)
+            expectation.fulfill()
+        } catch let error {
+            XCTFail("VerifiableCredential should have verified successfully. Unexpected error: \(error)")
+        }
+        await fulfillment(of: [expectation], timeout: 5.0, enforceOrder: true)
     }
 }
