@@ -52,7 +52,7 @@ final class JWTTests: XCTestCase {
         XCTAssertThrowsError(try JWT.parse(jwtString: "\(base64UrlEncodedHeader).efgh.hijk"))
     }
 
-    func testVerifyJwtExpired() async throws {
+    func test_verifyJwtExpired() async throws {
         let did = try DIDJWK.create(options: .init(algorithm: .secp256k1))
         let header = JWS.Header(algorithm: .es256k, keyID: did.document.verificationMethod!.first!.id, type: "JWT")
         let base64UrlEncodedHeader = try JSONEncoder().encode(header).base64UrlEncodedString()
