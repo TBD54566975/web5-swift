@@ -78,7 +78,7 @@ final class JWTTests: XCTestCase {
         }
     }
 
-    func testVerifyPublicKeyAlgorithmIsNotSupported() async throws {
+    func test_verifyPublicKeyAlgorithmIsNotSupported() async throws {
         let did = try DIDJWK.create(options: .init(algorithm: .secp256k1))
         let header = JWS.Header(algorithm: .eddsa, keyID: did.document.verificationMethod!.first!.id, type: "JWT")
         let base64UrlEncodedHeader = try JSONEncoder().encode(header).base64UrlEncodedString()
