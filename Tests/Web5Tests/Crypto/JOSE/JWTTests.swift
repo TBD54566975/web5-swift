@@ -91,7 +91,7 @@ final class JWTTests: XCTestCase {
         }
     }
 
-    func testReturnSignerDidIfVerificationSucceeds() async throws {
+    func test_verifyReturnDecodedJwt() async throws {
         let didStr = """
         {
             "document": {
