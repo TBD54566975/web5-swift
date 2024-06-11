@@ -92,46 +92,8 @@ final class JWTTests: XCTestCase {
     }
 
     func test_verifyReturnDecodedJwt() async throws {
-        let didStr = """
-        {
-            "document": {
-                "@context": "https://www.w3.org/ns/did/v1",
-                "assertionMethod": ["did:jwk:eyJ4IjoiX2h6M1A3QkdEb1JvUlNQaFpGWE51NFZkdHJjOWxfSi00MlR0eEdZd0M1OCIsImtpZCI6IlZieW9NdFJjQzF4RUxnLWJKQTBLaHBLOFNfai1RN3o3NENZak9ZSWtuNmsiLCJjcnYiOiJFZDI1NTE5IiwiYWxnIjoiRWREU0EiLCJrdHkiOiJPS1AifQ#0"],
-                "authentication": ["did:jwk:eyJ4IjoiX2h6M1A3QkdEb1JvUlNQaFpGWE51NFZkdHJjOWxfSi00MlR0eEdZd0M1OCIsImtpZCI6IlZieW9NdFJjQzF4RUxnLWJKQTBLaHBLOFNfai1RN3o3NENZak9ZSWtuNmsiLCJjcnYiOiJFZDI1NTE5IiwiYWxnIjoiRWREU0EiLCJrdHkiOiJPS1AifQ#0"],
-                "capabilityDelegation": ["did:jwk:eyJ4IjoiX2h6M1A3QkdEb1JvUlNQaFpGWE51NFZkdHJjOWxfSi00MlR0eEdZd0M1OCIsImtpZCI6IlZieW9NdFJjQzF4RUxnLWJKQTBLaHBLOFNfai1RN3o3NENZak9ZSWtuNmsiLCJjcnYiOiJFZDI1NTE5IiwiYWxnIjoiRWREU0EiLCJrdHkiOiJPS1AifQ#0"],
-                "capabilityInvocation": ["did:jwk:eyJ4IjoiX2h6M1A3QkdEb1JvUlNQaFpGWE51NFZkdHJjOWxfSi00MlR0eEdZd0M1OCIsImtpZCI6IlZieW9NdFJjQzF4RUxnLWJKQTBLaHBLOFNfai1RN3o3NENZak9ZSWtuNmsiLCJjcnYiOiJFZDI1NTE5IiwiYWxnIjoiRWREU0EiLCJrdHkiOiJPS1AifQ#0"],
-                "id": "did:jwk:eyJ4IjoiX2h6M1A3QkdEb1JvUlNQaFpGWE51NFZkdHJjOWxfSi00MlR0eEdZd0M1OCIsImtpZCI6IlZieW9NdFJjQzF4RUxnLWJKQTBLaHBLOFNfai1RN3o3NENZak9ZSWtuNmsiLCJjcnYiOiJFZDI1NTE5IiwiYWxnIjoiRWREU0EiLCJrdHkiOiJPS1AifQ",
-                "verificationMethod": [
-                {
-                    "controller": "did:jwk:eyJ4IjoiX2h6M1A3QkdEb1JvUlNQaFpGWE51NFZkdHJjOWxfSi00MlR0eEdZd0M1OCIsImtpZCI6IlZieW9NdFJjQzF4RUxnLWJKQTBLaHBLOFNfai1RN3o3NENZak9ZSWtuNmsiLCJjcnYiOiJFZDI1NTE5IiwiYWxnIjoiRWREU0EiLCJrdHkiOiJPS1AifQ",
-                    "id": "did:jwk:eyJ4IjoiX2h6M1A3QkdEb1JvUlNQaFpGWE51NFZkdHJjOWxfSi00MlR0eEdZd0M1OCIsImtpZCI6IlZieW9NdFJjQzF4RUxnLWJKQTBLaHBLOFNfai1RN3o3NENZak9ZSWtuNmsiLCJjcnYiOiJFZDI1NTE5IiwiYWxnIjoiRWREU0EiLCJrdHkiOiJPS1AifQ#0",
-                    "publicKeyJwk": {
-                    "alg": "EdDSA",
-                    "crv": "Ed25519",
-                    "kid": "VbyoMtRcC1xELg-bJA0KhpK8S_j-Q7z74CYjOYIkn6k",
-                    "kty": "OKP",
-                    "x": "_hz3P7BGDoRoRSPhZFXNu4Vdtrc9l_J-42TtxGYwC58"
-                    },
-                    "type": "JsonWebKey"
-                }
-                ]
-            },
-            "metadata": {},
-            "privateKeys": [
-                {
-                "alg": "EdDSA",
-                "crv": "Ed25519",
-                "d": "U28yLLtmy_rjPaqaYhj4tnI0A6SzhJO9bbXl5grT0Rs",
-                "kid": "VbyoMtRcC1xELg-bJA0KhpK8S_j-Q7z74CYjOYIkn6k",
-                "kty": "OKP",
-                "x": "_hz3P7BGDoRoRSPhZFXNu4Vdtrc9l_J-42TtxGYwC58"
-                }
-            ],
-            "uri": "did:jwk:eyJ4IjoiX2h6M1A3QkdEb1JvUlNQaFpGWE51NFZkdHJjOWxfSi00MlR0eEdZd0M1OCIsImtpZCI6IlZieW9NdFJjQzF4RUxnLWJKQTBLaHBLOFNfai1RN3o3NENZak9ZSWtuNmsiLCJjcnYiOiJFZDI1NTE5IiwiYWxnIjoiRWREU0EiLCJrdHkiOiJPS1AifQ"
-        }
-        """
-        let portableDid = try JSONDecoder().decode(PortableDID.self, from: didStr.data(using: .utf8)!)
-        let did = try DIDJWK.import(portableDID: portableDid)
+        let did = try DIDJWK.create()
+        let portableDid = try did.export()
         let header = JWS.Header(algorithm: .eddsa, keyID: did.document.verificationMethod!.first!.id, type: "JWT")
         let base64UrlEncodedHeader = try JSONEncoder().encode(header).base64UrlEncodedString()
         let claims = JWT.Claims(issuer: did.uri, subject: did.uri, issuedAt: Date())
