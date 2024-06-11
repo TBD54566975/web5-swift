@@ -164,7 +164,7 @@ public struct JWT {
             throw Error.verificationFailed("JWT has expired")
         }
 
-        guard let keyId = parsedJwt.header.keyID else {
+        guard let keyID = parsedJwt.header.keyID else {
             throw Error.verificationFailed("JWT has no keyID")
         }
 
