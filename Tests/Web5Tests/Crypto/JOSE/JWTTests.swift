@@ -65,7 +65,7 @@ final class JWTTests: XCTestCase {
         }
     }
 
-    func testVerifyJwtKeyIdNotDereferenceVerificationMethod() async throws {
+    func test_verifyJwtKeyIdNotDereferencedVerificationMethod() async throws {
         let did = try DIDJWK.create(options: .init(algorithm: .secp256k1))
         let header = JWS.Header(algorithm: .es256k, keyID: did.uri, type: "JWT")
         let base64UrlEncodedHeader = try JSONEncoder().encode(header).base64UrlEncodedString()
