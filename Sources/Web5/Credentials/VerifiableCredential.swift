@@ -19,6 +19,8 @@ public protocol VerifiableCredentialCreateOptions {
     var issuanceDate: ISO8601Date? { get set }
     /** The expiration date of the credential, as a ISO8601Date. */
     var expirationDate: ISO8601Date? { get set }
+    /** The credential status lookup information. */
+    var credentialStatus: StatusList2021Entry? { get set }
     /** The schema of the credential. */
     var credentialSchema: CredentialSchema? { get set }
     /** The evidence of the credential, as an array of dicationary. */
