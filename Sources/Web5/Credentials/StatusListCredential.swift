@@ -34,7 +34,7 @@ public struct StatusListCredentialCreateOptions {
 /// StatusList2021Entry Credential status lookup information included in a Verifiable Credential that supports status lookup.
 /// Data model dictated by the Status List 2021 spec.
 /// See: [Status List 2021 Entry](https://www.w3.org/community/reports/credentials/CG-FINAL-vc-status-list-2021-20230102/#example-example-statuslist2021credential)
-public struct StatusList2021Entry {
+public struct StatusList2021Entry: Codable, Equatable {
     /// The id of the status list entry.
     let id: String
     /// The type of the status list entry.

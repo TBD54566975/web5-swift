@@ -15,6 +15,7 @@ class VerifiableCredentialTests: XCTestCase {
         var issuanceDate: ISO8601Date?
         var expirationDate: ISO8601Date?
         var data: [String: AnyCodable]?
+        var credentialStatus: StatusList2021Entry?
         var credentialSchema: CredentialSchema?
         var evidence: [[String: AnyCodable]]?
     }

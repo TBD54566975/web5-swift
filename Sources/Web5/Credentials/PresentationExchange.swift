@@ -11,7 +11,7 @@ public struct VCDataModel: Codable {
     public let issuanceDate: ISO8601Date
     public let expirationDate: ISO8601Date?
     public let credentialSubject: [String: AnyCodable]
-    public let credentialStatus: CredentialStatus?
+    public let credentialStatus: StatusList2021Entry?
     public let credentialSchema: CredentialSchema?
     public let evidence: [[String: AnyCodable]]?
     
@@ -27,14 +27,6 @@ public struct VCDataModel: Codable {
         case credentialSchema
         case evidence
     }
-}
-
-public struct CredentialStatus: Codable {
-    public let id: String
-    public let type: String
-    public let statusPurpose: String
-    public let statusListIndex: String
-    public let statusListCredential: String
 }
 
 public struct CredentialSchema: Codable {

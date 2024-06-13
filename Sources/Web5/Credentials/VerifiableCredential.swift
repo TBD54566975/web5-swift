@@ -73,15 +73,19 @@ public struct VerifiableCredential {
             credentialSubject = credentialSubject.merging(data) { (_, new) in new}
         }
 
+        var context = [CredentialConstant.defaultContext]
+        if options.credentialStatus != nil {
+            context.append(StatusListConstant.defaultContext)
+        }
         let vcDataModel = VCDataModel(
-            context: ["https://www.w3.org/2018/credentials/v1"],
+            context: context,
             id: "urn:uuid:\(UUID().uuidString)",
             type: ["VerifiableCredential"] + options.type,
             issuer: options.issuer,
             issuanceDate: options.issuanceDate ?? ISO8601Date(wrappedValue: Date()),
             expirationDate: options.expirationDate,
             credentialSubject: credentialSubject,
-            credentialStatus: nil,
+            credentialStatus: options.credentialStatus,
             credentialSchema: options.credentialSchema,
             evidence: options.evidence
         )
