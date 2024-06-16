@@ -1,6 +1,6 @@
 import Foundation
-import Compression
 import AnyCodable
+import GZIP
 
 public enum StatusListConstant {
     public static let defaultContext = "https://w3id.org/vc/status-list/2021/v1"
@@ -154,8 +154,7 @@ public struct StatusListCredential {
         }
         
         let credentialSubject = statusListCredential.vcDataModel.credentialSubject
-        guard let statusListCredStatusPurposeRaw = credentialSubject["statusPurpose"]?.value as? String,
-              let statusListCredStatusPurpose = StatusPurpose(rawValue: statusListCredStatusPurposeRaw),
+        guard let statusListCredStatusPurpose = credentialSubject["statusPurpose"]?.value as? StatusPurpose,
               let encodedListCompressedBitString = credentialSubject["encodedList"]?.value as? String else {
             throw StatusListCredential.Error.validateError("Invalid status list credential format")
         }
@@ -172,7 +171,7 @@ public struct StatusListCredential {
             throw StatusListCredential.Error.validateError("Invalid status list index")
         }
         
-        return getBit(compressedBitstring: encodedListCompressedBitString, bitIndex: statusListIndex)
+        return try getBit(compressedBitstring: encodedListCompressedBitString, bitIndex: statusListIndex)
     }
 
      /**
@@ -183,17 +182,16 @@ public struct StatusListCredential {
      */
     private static func generateBitString(indexOfBitsToTurnOn: [Int]) throws -> String {
         var bitArray = [UInt8](repeating: 0, count: StatusListConstant.bitStringSize / 8)
-        
+
         indexOfBitsToTurnOn.forEach { index in
             let byteIndex = index / 8
             let bitIndex = index % 8
             bitArray[byteIndex] |= 1 << (7 - bitIndex)
         }
-        
-        guard let compressedData = bitArray.compress(with: .lzfse) else {
+
+        guard let compressedData = (Data(bitArray) as NSData).gzipped() else {
             throw StatusListCredential.Error.generateBitError("Compression failed")
         }
-        
         return compressedData.base64UrlEncodedString()
     }
 
@@ -206,10 +204,10 @@ public struct StatusListCredential {
      *   - bitIndex: The zero-based index of the bit to retrieve from the decompressed bitstream.
      * - Returns: True if the bit at the specified index is 1, false if it is 0.
      */
-    private static func getBit(compressedBitstring: String, bitIndex: Int) -> Bool {
+    private static func getBit(compressedBitstring: String, bitIndex: Int) throws -> Bool {
         guard let compressedData = try? compressedBitstring.decodeBase64Url(),
-              let decompressedData = compressedData.decompress(with: .lzfse) else {
-            fatalError("Decompression failed")
+              let decompressedData = (compressedData as NSData).gunzipped() else {
+            throw StatusListCredential.Error.generateBitError("Decompression failed")
         }
 
         let byteIndex = bitIndex / 8
@@ -221,11 +219,12 @@ public struct StatusListCredential {
         return bitInteger == 1
     }
 
-    // private static func getCurrentXmlSchema112Timestamp() -> String {
-    //     let dateFormatter = ISO8601DateFormatter()
-    //     dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-    //     return dateFormatter.string(from: Date())
-    // }
+    #if DEBUG
+    public static func getBit(s: String, i: Int) throws -> Bool {
+        try getBit(compressedBitstring: s, bitIndex: i)
+    }
+    #endif
+
 }
 
 extension StatusListCredential {
@@ -233,52 +232,5 @@ extension StatusListCredential {
         case statusListCredentialError(String)
         case generateBitError(String)
         case validateError(String)
-    }
-}
-
-extension Array where Element == UInt8 {
-    func compress(with algorithm: Data.Algorithm) -> [UInt8]? {
-        var sourceBuffer = self
-        let sourceSize = sourceBuffer.count
-
-        var destinationBuffer = [UInt8](repeating: 0, count: sourceSize)
-        let compressedSize = compression_encode_buffer(&destinationBuffer, sourceSize, &sourceBuffer, sourceSize, nil, algorithm.compression_algorithm)
-
-        guard compressedSize != 0 else { return nil }
-        return Array(destinationBuffer[0..<compressedSize])
-    }
-}
-
-extension Data {
-
-    func decompress(with algorithm: Algorithm) -> Data? {
-        var sourceBuffer = [UInt8](self)
-        let sourceSize = sourceBuffer.count
-
-        var destinationBuffer = [UInt8](repeating: 0, count: sourceSize * 4)
-        let decompressedSize = compression_decode_buffer(&destinationBuffer, destinationBuffer.count, &sourceBuffer, sourceSize, nil, algorithm.compression_algorithm)
-
-        guard decompressedSize != 0 else { return nil }
-        return Data(bytes: destinationBuffer, count: decompressedSize)
-    }
-
-    enum Algorithm {
-        case lz4
-        case zlib
-        case lzma
-        case lzfse
-
-        var compression_algorithm: compression_algorithm {
-            switch self {
-            case .lz4:
-                return COMPRESSION_LZ4
-            case .zlib:
-                return COMPRESSION_ZLIB
-            case .lzma:
-                return COMPRESSION_LZMA
-            case .lzfse:
-                return COMPRESSION_LZFSE
-            }
-        }
     }
 }

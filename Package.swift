@@ -14,6 +14,7 @@ let package = Package(
         )
     ],
     dependencies: [
+        .package(url: "https://github.com/nicklockwood/GZIP.git", from: "1.3.2"),
         .package(url: "https://github.com/GigaBitcoin/secp256k1.swift.git", from: "0.16.0"),
         .package(url: "https://github.com/swift-extras/swift-extras-base64.git", from: "0.7.0"),
         .package(url: "https://github.com/pointfreeco/swift-custom-dump.git", from: "1.1.2"),
@@ -28,6 +29,7 @@ let package = Package(
         .target(
             name: "Web5",
             dependencies: [
+                .product(name: "GZIP", package: "GZIP"),
                 .product(name: "secp256k1", package: "secp256k1.swift"),
                 .product(name: "ExtrasBase64", package: "swift-extras-base64"),
                 .product(name: "AnyCodable", package: "anycodable"),
