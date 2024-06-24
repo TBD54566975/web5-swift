@@ -3,17 +3,17 @@ import Foundation
 import Sextant
 import JSONSchema
 
-public struct VCDataModel: Codable {
+public struct VCDataModel: Codable, Equatable {
     public let context: [String]
     public let id: String
     public let type: [String]
     public let issuer: String
-    public let issuanceDate: String
-    public let expirationDate: String?
+    public let issuanceDate: ISO8601Date
+    public let expirationDate: ISO8601Date?
     public let credentialSubject: [String: AnyCodable]
-    public let credentialStatus: CredentialStatus?
+    public let credentialStatus: StatusList2021Entry?
     public let credentialSchema: CredentialSchema?
-    public let evidence: [String: AnyCodable]?
+    public let evidence: [[String: AnyCodable]]?
     
     enum CodingKeys: String, CodingKey {
         case context = "@context"
@@ -27,17 +27,13 @@ public struct VCDataModel: Codable {
         case credentialSchema
         case evidence
     }
+
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+        return lhs.id == rhs.id
+    }
 }
 
-public struct CredentialStatus: Codable {
-    public let id: String
-    public let type: String
-    public let statusPurpose: String
-    public let statusListIndex: String
-    public let statusListCredential: String
-}
-
-public struct CredentialSchema: Codable {
+public struct CredentialSchema: Codable, Equatable {
     public let id: String
     public let type: String
 }

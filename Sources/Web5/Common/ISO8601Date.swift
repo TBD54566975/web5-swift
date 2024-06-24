@@ -2,14 +2,21 @@ import Foundation
 
 /// Wrapper used to easily encode a `Date` to and decode a `Date` from an ISO 8601 formatted date string.
 @propertyWrapper
-struct ISO8601Date: Codable {
-    var wrappedValue: Date?
+public struct ISO8601Date: Codable, Equatable {
+    public var wrappedValue: Date?
+    public var dateString: String? {
+        return wrappedValue != nil ? ISO8601DateFormatter().string(from: wrappedValue!) : nil    
+    }
 
-    init(wrappedValue: Date?) {
+    public init(wrappedValue: Date?) {
         self.wrappedValue = wrappedValue
     }
 
-    init(from decoder: Decoder) throws {
+    public init(dateString: String) {
+        wrappedValue = ISO8601DateFormatter().date(from: dateString)
+    }
+
+    public init(from decoder: Decoder) throws {
         let value = try decoder.singleValueContainer()
         let stringValue = try value.decode(String.self)
         if let date = ISO8601DateFormatter().date(from: stringValue) {
@@ -19,7 +26,7 @@ struct ISO8601Date: Codable {
         }
     }
 
-    func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
 
         if let wrappedValue {
