@@ -72,6 +72,7 @@ class VerifiableCredentialTests: XCTestCase {
             XCTAssertEqual(currentVC.vcDataModel.credentialSubject["name"]?.value as! String, "alice")
             XCTAssertEqual(currentVC.vcDataModel.credentialSubject["isRemote"]?.value as! Bool, true)
         }
+        XCTAssertEqual(vc, parsedVC)
     }
 
     func test_createAndSignKYCWithDidJwk() async throws {

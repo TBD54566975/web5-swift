@@ -2,7 +2,7 @@ import Foundation
 
 /// Wrapper used to easily encode a `Date` to and decode a `Date` from an ISO 8601 formatted date string.
 @propertyWrapper
-public struct ISO8601Date: Codable {
+public struct ISO8601Date: Codable, Equatable {
     public var wrappedValue: Date?
     public var dateString: String? {
         return wrappedValue != nil ? ISO8601DateFormatter().string(from: wrappedValue!) : nil    

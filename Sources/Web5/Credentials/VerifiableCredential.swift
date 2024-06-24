@@ -27,7 +27,8 @@ public protocol VerifiableCredentialCreateOptions {
     var evidence: [[String: AnyCodable]]? { get set }
 };
 
-public struct VerifiableCredential {
+public struct VerifiableCredential: Equatable {
+
     let vcDataModel: VCDataModel
 
     init(vcDataModel: VCDataModel) {

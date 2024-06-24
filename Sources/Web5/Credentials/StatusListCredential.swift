@@ -47,7 +47,6 @@ public struct StatusList2021Entry: Codable, Equatable {
     let statusListCredential: String
 }
 
-
 public struct StatusListCredential {
     /**
      * Create a `StatusListCredential` with a specific purpose, e.g., for revocation.

@@ -3,7 +3,7 @@ import Foundation
 import Sextant
 import JSONSchema
 
-public struct VCDataModel: Codable {
+public struct VCDataModel: Codable, Equatable {
     public let context: [String]
     public let id: String
     public let type: [String]
@@ -27,9 +27,13 @@ public struct VCDataModel: Codable {
         case credentialSchema
         case evidence
     }
+
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+        return lhs.id == rhs.id
+    }
 }
 
-public struct CredentialSchema: Codable {
+public struct CredentialSchema: Codable, Equatable {
     public let id: String
     public let type: String
 }
