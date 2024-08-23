@@ -23,7 +23,22 @@ jobs:
       run: swift build
 
     - name: Run tests
+      id: tests
       run: swift test --enable-code-coverage
+
+    - name: Execute Spec Test Vector Report
+      if: always() && steps.tests.conclusion != 'skipped'
+      uses: TBD54566975/sdk-report-runner/.github/actions/specs-report@main
+      with:
+        junit-report-paths: tests.xml
+        spec-path: Tests/Web5TestVectors/web5-spec
+        suite-name-regex: Web5TestVectors
+        feature-regex: Web5TestVectors(\w+)
+        vector-regex: test_(\w+)
+        fail-on-missing-vectors: false
+        fail-on-failed-test-cases: true
+        comment-on-pr: true
+        git-token: ${{ secrets.GITHUB_TOKEN }}
     
     - name: Convert the coverage data
       run: llvm-cov export -format="lcov" .build/*-apple-macosx/debug/Web5PackageTests.xctest/Contents/MacOS/Web5PackageTests -instr-profile .build/*-apple-macosx/debug/codecov/default.profdata > info.lcov
