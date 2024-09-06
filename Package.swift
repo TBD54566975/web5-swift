@@ -22,7 +22,10 @@ let package = Package(
         .package(url: "https://github.com/flight-school/anycodable.git", from: "0.6.7"),
         .package(url: "https://github.com/Bouke/DNS.git", from: "1.2.0"),
         .package(url: "https://github.com/KittyMac/Sextant.git", exact: "0.4.0"),
-        .package(url: "https://github.com/kylef/JSONSchema.swift.git", from: "0.6.0")
+        .package(url: "https://github.com/kylef/JSONSchema.swift.git", from: "0.6.0"),
+        .package(url: "https://github.com/valpackett/SwiftCBOR.git", from: "0.4.7"),
+        .package(url: "https://github.com/norio-nomura/Base32.git", from: "0.9.0"),
+        .package(url: "https://github.com/keefertaylor/Base58Swift.git", from: "2.1.14")
     ],
     targets: [
         .target(
@@ -33,7 +36,10 @@ let package = Package(
                 .product(name: "AnyCodable", package: "anycodable"),
                 .product(name: "DNS", package: "DNS"),
                 .product(name: "Sextant", package: "sextant"),
-                .product(name: "JSONSchema", package: "jsonschema.swift")
+                .product(name: "JSONSchema", package: "jsonschema.swift"),
+                .product(name: "SwiftCBOR", package: "swiftcbor"),
+                .product(name: "Base32", package: "base32"),
+                .product(name: "Base58Swift", package: "base58swift")
             ]
         ),
         .testTarget(
