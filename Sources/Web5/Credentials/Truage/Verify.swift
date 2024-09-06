@@ -1,5 +1,7 @@
 import Foundation
+import CryptoKit
 import SwiftCBOR
+import Base32
 import Base58Swift
 
 enum VerificationError: Error {
@@ -16,69 +18,79 @@ struct VerificationResult {
     let credential: [String: Any]?
     let issuer: String?
     let overAge: Bool?
-    let verificationDetails: [String: Any]?
 }
 
 // Verifies QR code text containing a `VP1-` header and a base32-encoded
-func verifyQrCodeText(qrCodeText: String) throws -> VerificationResult {
+func verifyQrCodeText(qrCodeText: String, minAge: Int = 21) throws -> VerificationResult {
     do {
         // Decode the QR code text and get the CBOR map
         let cborMap = try fromQrCodeText(expectedHeader: "VP1-", text: qrCodeText)
         
         print("Decoded CBOR Map: \(String(describing: cborMap))")
-
+        
         // Extract and convert fields from CBOR map
         guard let vcMap = cborMap[CBOR.unsignedInt(124)] else {
             throw VerificationError.invalidCredential
         }
         
-        let verifiableCredentialId = try convertToUuid(vcMap[CBOR.unsignedInt(112)]!)
+        let verifiableCredentialId = try CBORUtils.convertToUuid(vcMap[CBOR.unsignedInt(112)]!)
         print("Verifiable Credential ID: \(verifiableCredentialId)")
 
-        let issuanceDate = convertToRfc3339Datetime(vcMap[CBOR.unsignedInt(164)]!)
+        let issuanceDate = CBORUtils.convertToRfc3339Datetime(vcMap[CBOR.unsignedInt(164)]!)
         print("Issuance Date: \(issuanceDate)")
 
-        let expirationDate = convertToRfc3339Datetime(vcMap[CBOR.unsignedInt(162)]!)
+        let expirationDate = CBORUtils.convertToRfc3339Datetime(vcMap[CBOR.unsignedInt(162)]!)
         print("Expiration Date: \(expirationDate)")
 
         // TODO: figure out how to convert to did
-//        let issuer = try convertToDid(vcMap[CBOR.unsignedInt(168)]!)
-//        print("Issuer: \(issuer)")
+        let issuer = try CBORUtils.convertToDid(vcMap[CBOR.unsignedInt(168)]!)
+        print("Issuer: \(issuer)")
         
         guard let subjectMap = vcMap[CBOR.unsignedInt(158)] else {
             throw VerificationError.invalidCredential
         }
-        let concealedIdToken = try convertToMultibase(subjectMap[CBOR.unsignedInt(138)]!)
+        let concealedIdToken = try CBORUtils.convertToMultibase(subjectMap[CBOR.unsignedInt(138)]!)
         print("Concealed ID Token: \(concealedIdToken)")
 
-        let overAge = try convertToInt(subjectMap[CBOR.unsignedInt(148)]!)
+        let overAge = try CBORUtils.convertToInt(subjectMap[CBOR.unsignedInt(148)]!)
         print("Over Age: \(overAge)")
 
         guard let proofMap = vcMap[CBOR.unsignedInt(114)] else {
             throw VerificationError.invalidCredential
         }
-        let proofCreated = convertToRfc3339Datetime(proofMap[CBOR.unsignedInt(182)]!)
+        let proofCreated = CBORUtils.convertToRfc3339Datetime(proofMap[CBOR.unsignedInt(182)]!)
         print("Proof Created: \(proofCreated)")
 
-        let proofValue = try convertToMultibase(proofMap[CBOR.unsignedInt(192)]!)
+        let proofValue = try CBORUtils.convertToMultibase(proofMap[CBOR.unsignedInt(192)]!)
         print("Proof Value: \(proofValue)")
 
         // TODO: figure out how to convert to did
-//        let verificationMethod = try convertToDid(proofMap[CBOR.unsignedInt(194)]!)
-//        print("Verification Method: \(verificationMethod)")
+        let verificationMethod = try CBORUtils.convertToDid(proofMap[CBOR.unsignedInt(194)]!)
+        print("Verification Method: \(verificationMethod)")
         
+        let payload = generatePayload(proofCreated: proofCreated, verificationMethod: verificationMethod, verifiableCredentialId: verifiableCredentialId, expirationDate: expirationDate, issuanceDate: issuanceDate, issuer: issuer, overAge: Int(overAge), concealedIdToken: concealedIdToken)
+        
+        let signature = try generateSignature(proofValue: proofValue)
+        
+        let publicKey = try generatePublicKey(verificationMethod: verificationMethod)
+        
+        let isValid = try Ed25519.verify(
+            payload: payload.data(using: .utf8)!,
+            signature: signature,
+            publicKey: publicKey
+        )
+        
+        print("isValid: \(isValid)")
+
         return VerificationResult(
-            verified: true,
+            verified: isValid,
             credential: [
                 "id": verifiableCredentialId,
-//                "issuer": issuer,
                 "issuanceDate": issuanceDate,
                 "expirationDate": expirationDate
             ],
-            issuer: nil,
-//            issuer: issuer,
-            overAge: overAge >= 21,
-            verificationDetails: nil // TODO: Add actual details here
+            issuer: issuer,
+            overAge: overAge >= minAge
         )
 
     } catch {
@@ -87,72 +99,84 @@ func verifyQrCodeText(qrCodeText: String) throws -> VerificationResult {
             verified: false,
             credential: nil,
             issuer: nil,
-            overAge: nil,
-            verificationDetails: nil
+            overAge: nil
         )
     }
 }
 
-func convertToUuid(_ data: CBOR) throws -> String {
-    guard case let .array(array) = data, array.count == 2,
-          case let .unsignedInt(type) = array[0], type == 3,
-          case let .byteString(bytes) = array[1] else {
-        print("Error: malformed UUID encoding", data)
+func generatePayload(proofCreated: String, verificationMethod: String, verifiableCredentialId: String, expirationDate: String, issuanceDate: String, issuer: String, overAge: Int, concealedIdToken: String) -> String {
+    // Generate proof quads
+    let proofQuads = """
+    _:c14n0 <http://purl.org/dc/terms/created> "\(proofCreated)"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+    _:c14n0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/security#Ed25519Signature2020> .
+    _:c14n0 <https://w3id.org/security#proofPurpose> <https://w3id.org/security#assertionMethod> .
+    _:c14n0 <https://w3id.org/security#verificationMethod> <\(verificationMethod)> .
+    """
+
+    // Generate vc quads
+    let vcQuads = """
+    <\(verifiableCredentialId)> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/age#OverAgeTokenCredential> .
+    <\(verifiableCredentialId)> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .
+    <\(verifiableCredentialId)> <https://www.w3.org/2018/credentials#credentialSubject> _:c14n0 .
+    <\(verifiableCredentialId)> <https://www.w3.org/2018/credentials#expirationDate> "\(expirationDate)"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+    <\(verifiableCredentialId)> <https://www.w3.org/2018/credentials#issuanceDate> "\(issuanceDate)"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+    <\(verifiableCredentialId)> <https://www.w3.org/2018/credentials#issuer> <\(issuer)> .
+    _:c14n0 <https://w3id.org/age#overAge> "\(overAge)"^^<http://www.w3.org/2001/XMLSchema#positiveInteger> .
+    _:c14n0 <https://w3id.org/cit#concealedIdToken> "\(concealedIdToken)"^^<https://w3id.org/security#multibase> .
+    """
+
+    // Compute SHA-256 hash for both proofQuads and vcQuads
+    let proofQuadsHash = sha256(proofQuads)
+    let vcQuadsHash = sha256(vcQuads)
+
+    // Concatenate the two hashes
+    let message = proofQuadsHash + vcQuadsHash
+
+    // Return the hexadecimal string of the concatenated hash
+    return message.map { String(format: "%02x", $0) }.joined()
+}
+
+func generateSignature(proofValue: String) throws -> Data {
+    let slicedProofValue = String(proofValue.dropFirst())
+        
+    // Decode the Base58 string
+    guard let decodedData = Base58.base58Decode(slicedProofValue) else {
         throw VerificationError.invalidCredential
     }
     
-    // Convert the byte array into a UUID and format it as a URN
-    let uuidString = UUID.from(byteArray: bytes).uuidString
-    return "urn:uuid:\(uuidString)"
+    // Return the decoded data as a Data object
+    return Data(decodedData)
 }
 
-func convertToRfc3339Datetime(_ data: CBOR) -> String {
-    guard case let .unsignedInt(timestamp) = data else {
-        return ""
-    }
-    let datetime = Date(timeIntervalSince1970: TimeInterval(timestamp))
-    let formatter = ISO8601DateFormatter()
-    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-    return formatter.string(from: datetime)
-}
-
-func convertToDid(_ data: CBOR) throws -> String {
-    // TODO: implement this with web5?
-    return ""
-}
-
-func convertToMultibase(_ data: CBOR) throws -> String {
-    guard case let .byteString(bytes) = data else {
-        throw VerificationError.invalidCredential
-    }
-    let encoding = bytes[0]
-    let content = Array(bytes.dropFirst())
-    
-    if encoding != 0x7a {
+func generatePublicKey(verificationMethod: String) throws -> Jwk {
+    // Split the string by the '#' character and get the second part (fingerprint)
+    let components = verificationMethod.split(separator: "#")
+    guard components.count > 1 else {
         throw VerificationError.invalidCredential
     }
     
-    return "z" + Base58.base58Encode(content)
-}
-
-func convertToInt(_ data: CBOR) throws -> Int64 {
-    guard case let .unsignedInt(value) = data else {
+    let fingerprint = String(components[1])
+    
+    let slicedFingerprint = String(fingerprint.dropFirst())
+    
+    // Decode the fingerprint from Base58 to [UInt8]?
+    guard let publicKeyBytes = Base58.base58Decode(slicedFingerprint) else {
         throw VerificationError.invalidCredential
     }
-    return Int64(value)
+    
+    // Validate the key size
+    guard publicKeyBytes.count == 32 else {
+        throw VerificationError.invalidCredential
+    }
+        
+    // Generate the public key from the decoded data
+    return try Ed25519.publicKeyFromBytes(Data(publicKeyBytes))
 }
 
-extension UUID {
-    static func from(byteArray: [UInt8]) -> UUID {
-        guard byteArray.count == 16 else {
-            fatalError("UUIDs must be exactly 16 bytes")
-        }
-        let uuid = uuid_t(
-            byteArray[0], byteArray[1], byteArray[2], byteArray[3],
-            byteArray[4], byteArray[5], byteArray[6], byteArray[7],
-            byteArray[8], byteArray[9], byteArray[10], byteArray[11],
-            byteArray[12], byteArray[13], byteArray[14], byteArray[15]
-        )
-        return UUID(uuid: uuid)
-    }
+// Helper function to compute SHA-256 hash
+func sha256(_ input: String) -> [UInt8] {
+    let data = Data(input.utf8)
+    let hashed = SHA256.hash(data: data)
+    return Array(hashed)
 }
+
