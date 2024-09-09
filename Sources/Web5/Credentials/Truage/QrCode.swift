@@ -53,10 +53,10 @@ func toQrCodeText(header: String = "", jsonDocument: String? = nil, cborBytes: D
         throw QRCodeError.invalidInput // At least one input must be provided
     }
     
-    return _bytesToQrCodeText(header: header, bytes: finalCborBytes)
+    return bytesToQrCodeText(header: header, bytes: finalCborBytes)
 }
 
-private func _bytesToQrCodeText(header: String = "", bytes: Data) -> String {
+private func bytesToQrCodeText(header: String = "", bytes: Data) -> String {
     let encoded = base32Encode(bytes)
     return "\(header)\(BASE_32_UPPERCASE_MULTIBASE_PREFIX)\(encoded)"
 }
