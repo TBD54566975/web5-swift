@@ -112,7 +112,7 @@ func verifyQrCodeText(qrCodeText: String, minAge: Int = 21) throws -> Verificati
 }
 
 // Function to verify the QR code credential issuer and credential type
-func verifyIssuer(issuerDid: String, credentialType: String) async throws -> Bool {
+func verifyIssuer(issuerDid: String, credentialType: String) async throws -> Void {
     // Fetch the TruAge configuration object
     let truageConfig = try await fetchTrustedIssuers()
     
@@ -125,9 +125,6 @@ func verifyIssuer(issuerDid: String, credentialType: String) async throws -> Boo
     if !trustedIssuer.credentialTypes.contains(credentialType) {
         throw VerificationError.credentialTypeNotAllowed
     }
-    
-    // If everything is correct, return true for success
-    return true
 }
 
 
@@ -141,8 +138,8 @@ private func fetchTrustedIssuers() async throws -> TruAgeConfiguration {
     
     do {
         let (data, _) = try await URLSession.shared.data(from: url)
-        let configuration = try JSONDecoder().decode(TruAgeConfiguration.self, from: data)
-        return configuration
+        let truageConfig = try JSONDecoder().decode(TruAgeConfiguration.self, from: data)
+        return truageConfig
     } catch {
         throw VerificationError.networkError(error)
     }
