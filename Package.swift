@@ -25,7 +25,8 @@ let package = Package(
         .package(url: "https://github.com/kylef/JSONSchema.swift.git", from: "0.6.0"),
         .package(url: "https://github.com/valpackett/SwiftCBOR.git", from: "0.4.7"),
         .package(url: "https://github.com/norio-nomura/Base32.git", from: "0.9.0"),
-        .package(url: "https://github.com/keefertaylor/Base58Swift.git", from: "2.1.14")
+        .package(url: "https://github.com/keefertaylor/Base58Swift.git", from: "2.1.14"),
+        .package(url: "https://github.com/swift-libp2p/swift-varint.git", from: "0.0.1")
     ],
     targets: [
         .target(
@@ -39,7 +40,8 @@ let package = Package(
                 .product(name: "JSONSchema", package: "jsonschema.swift"),
                 .product(name: "SwiftCBOR", package: "swiftcbor"),
                 .product(name: "Base32", package: "base32"),
-                .product(name: "Base58Swift", package: "base58swift")
+                .product(name: "Base58Swift", package: "base58swift"),
+                .product(name: "VarInt", package: "swift-varint")
             ]
         ),
         .testTarget(
