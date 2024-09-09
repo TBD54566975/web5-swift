@@ -3,6 +3,7 @@ import CryptoKit
 import SwiftCBOR
 import Base32
 import Base58Swift
+import VarInt
 
 enum VerificationError: Error {
     case invalidContext
@@ -64,7 +65,6 @@ func verifyQrCodeText(qrCodeText: String, minAge: Int = 21) throws -> Verificati
         let proofValue = try CBORUtils.convertToMultibase(proofMap[CBOR.unsignedInt(192)]!)
         print("Proof Value: \(proofValue)")
 
-        // TODO: figure out how to convert to did
         let verificationMethod = try CBORUtils.convertToDid(proofMap[CBOR.unsignedInt(194)]!)
         print("Verification Method: \(verificationMethod)")
         
@@ -160,11 +160,15 @@ func generatePublicKey(verificationMethod: String) throws -> Jwk {
     let slicedFingerprint = String(fingerprint.dropFirst())
     
     // Decode the fingerprint from Base58 to [UInt8]?
-    guard let publicKeyBytes = Base58.base58Decode(slicedFingerprint) else {
+    guard let idBytes = Base58.base58Decode(slicedFingerprint) else {
         throw VerificationError.invalidCredential
     }
     
-    // Validate the key size
+    let varInt = uVarInt(idBytes)
+    
+    let publicKeyBytes = Array(idBytes.dropFirst(varInt.bytesRead))
+    
+    // Validate the bytes count
     guard publicKeyBytes.count == 32 else {
         throw VerificationError.invalidCredential
     }
