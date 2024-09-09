@@ -75,7 +75,7 @@ func verifyQrCodeText(qrCodeText: String, minAge: Int = 21) throws -> Verificati
         let publicKey = try generatePublicKey(verificationMethod: verificationMethod)
         
         let isValid = try Ed25519.verify(
-            payload: payload.data(using: .utf8)!,
+            payload: payload,
             signature: signature,
             publicKey: publicKey
         )
@@ -104,7 +104,7 @@ func verifyQrCodeText(qrCodeText: String, minAge: Int = 21) throws -> Verificati
     }
 }
 
-func generatePayload(proofCreated: String, verificationMethod: String, verifiableCredentialId: String, expirationDate: String, issuanceDate: String, issuer: String, overAge: Int, concealedIdToken: String) -> String {
+func generatePayload(proofCreated: String, verificationMethod: String, verifiableCredentialId: String, expirationDate: String, issuanceDate: String, issuer: String, overAge: Int, concealedIdToken: String) -> [UInt8] {
     // Generate proof quads
     let proofQuads = """
     _:c14n0 <http://purl.org/dc/terms/created> "\(proofCreated)"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
@@ -131,9 +131,8 @@ func generatePayload(proofCreated: String, verificationMethod: String, verifiabl
 
     // Concatenate the two hashes
     let message = proofQuadsHash + vcQuadsHash
-
-    // Return the hexadecimal string of the concatenated hash
-    return message.map { String(format: "%02x", $0) }.joined()
+    
+    return message
 }
 
 func generateSignature(proofValue: String) throws -> Data {
