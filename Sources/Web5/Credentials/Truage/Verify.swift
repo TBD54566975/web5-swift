@@ -6,12 +6,20 @@ import Base58Swift
 import VarInt
 
 enum VerificationError: Error {
-    case invalidContext
-    case missingVerifiableCredential
-    case multipleCredentials
     case invalidCredential
-    case overAgeMismatch
-    case verificationFailed
+    case issuerNotTrusted
+    case credentialTypeNotAllowed
+    case networkError(Error)
+}
+
+struct Issuer: Codable {
+    let id: String
+    let name: String
+    let credentialTypes: [String]
+}
+
+struct TruAgeConfiguration: Codable {
+    let trustedIssuers: [Issuer]
 }
 
 struct VerificationResult {
@@ -43,7 +51,6 @@ func verifyQrCodeText(qrCodeText: String, minAge: Int = 21) throws -> Verificati
         let expirationDate = CBORUtils.convertToRfc3339Datetime(vcMap[CBOR.unsignedInt(162)]!)
         print("Expiration Date: \(expirationDate)")
 
-        // TODO: figure out how to convert to did
         let issuer = try CBORUtils.convertToDid(vcMap[CBOR.unsignedInt(168)]!)
         print("Issuer: \(issuer)")
         
@@ -104,8 +111,45 @@ func verifyQrCodeText(qrCodeText: String, minAge: Int = 21) throws -> Verificati
     }
 }
 
-func generatePayload(proofCreated: String, verificationMethod: String, verifiableCredentialId: String, expirationDate: String, issuanceDate: String, issuer: String, overAge: Int, concealedIdToken: String) -> [UInt8] {
-    // Generate proof quads
+// Function to verify the QR code credential issuer and credential type
+func verifyIssuer(issuerDid: String, credentialType: String) async throws -> Bool {
+    // Fetch the TruAge configuration object
+    let truageConfig = try await fetchTrustedIssuers()
+    
+    // Check if the issuer is trusted
+    guard let trustedIssuer = truageConfig.trustedIssuers.first(where: { $0.id == issuerDid }) else {
+        throw VerificationError.issuerNotTrusted
+    }
+    
+    // Check if the credential type is allowed for the trusted issuer
+    if !trustedIssuer.credentialTypes.contains(credentialType) {
+        throw VerificationError.credentialTypeNotAllowed
+    }
+    
+    // If everything is correct, return true for success
+    return true
+}
+
+
+// Function to fetch the trusted issuers from TruAge API
+private func fetchTrustedIssuers() async throws -> TruAgeConfiguration {
+    let urlString = "https://admin.sandbox.truage.dev/age/issuers"
+    
+    guard let url = URL(string: urlString) else {
+        throw VerificationError.invalidCredential
+    }
+    
+    do {
+        let (data, _) = try await URLSession.shared.data(from: url)
+        let configuration = try JSONDecoder().decode(TruAgeConfiguration.self, from: data)
+        return configuration
+    } catch {
+        throw VerificationError.networkError(error)
+    }
+}
+
+// Function to generate payload for the signature
+private func generatePayload(proofCreated: String, verificationMethod: String, verifiableCredentialId: String, expirationDate: String, issuanceDate: String, issuer: String, overAge: Int, concealedIdToken: String) -> [UInt8] {
     let proofQuads = """
     _:c14n0 <http://purl.org/dc/terms/created> "\(proofCreated)"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
     _:c14n0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/security#Ed25519Signature2020> .
@@ -113,7 +157,6 @@ func generatePayload(proofCreated: String, verificationMethod: String, verifiabl
     _:c14n0 <https://w3id.org/security#verificationMethod> <\(verificationMethod)> .
     """
 
-    // Generate vc quads
     let vcQuads = """
     <\(verifiableCredentialId)> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/age#OverAgeTokenCredential> .
     <\(verifiableCredentialId)> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .
@@ -125,61 +168,50 @@ func generatePayload(proofCreated: String, verificationMethod: String, verifiabl
     _:c14n0 <https://w3id.org/cit#concealedIdToken> "\(concealedIdToken)"^^<https://w3id.org/security#multibase> .
     """
 
-    // Compute SHA-256 hash for both proofQuads and vcQuads
     let proofQuadsHash = sha256(proofQuads)
     let vcQuadsHash = sha256(vcQuads)
 
-    // Concatenate the two hashes
     let message = proofQuadsHash + vcQuadsHash
     
     return message
 }
 
-func generateSignature(proofValue: String) throws -> Data {
+// Function to generate signature
+private func generateSignature(proofValue: String) throws -> Data {
     let slicedProofValue = String(proofValue.dropFirst())
-        
-    // Decode the Base58 string
     guard let decodedData = Base58.base58Decode(slicedProofValue) else {
         throw VerificationError.invalidCredential
     }
-    
-    // Return the decoded data as a Data object
     return Data(decodedData)
 }
 
-func generatePublicKey(verificationMethod: String) throws -> Jwk {
-    // Split the string by the '#' character and get the second part (fingerprint)
+// Function to generate public key
+private func generatePublicKey(verificationMethod: String) throws -> Jwk {
     let components = verificationMethod.split(separator: "#")
     guard components.count > 1 else {
         throw VerificationError.invalidCredential
     }
     
     let fingerprint = String(components[1])
-    
     let slicedFingerprint = String(fingerprint.dropFirst())
     
-    // Decode the fingerprint from Base58 to [UInt8]?
     guard let idBytes = Base58.base58Decode(slicedFingerprint) else {
         throw VerificationError.invalidCredential
     }
     
     let varInt = uVarInt(idBytes)
-    
     let publicKeyBytes = Array(idBytes.dropFirst(varInt.bytesRead))
     
-    // Validate the bytes count
     guard publicKeyBytes.count == 32 else {
         throw VerificationError.invalidCredential
     }
-        
-    // Generate the public key from the decoded data
+    
     return try Ed25519.publicKeyFromBytes(Data(publicKeyBytes))
 }
 
 // Helper function to compute SHA-256 hash
-func sha256(_ input: String) -> [UInt8] {
+private func sha256(_ input: String) -> [UInt8] {
     let data = Data(input.utf8)
     let hashed = SHA256.hash(data: data)
     return Array(hashed)
 }
-
