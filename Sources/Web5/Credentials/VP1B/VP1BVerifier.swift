@@ -1,0 +1,24 @@
+import Foundation
+
+struct VP1BVerifier {
+    static let QR_PREFIX = "VP1-B"
+
+    static func verifyQRCode(qrcode: String) throws -> VP1B {
+        let vp1b = try VP1B.from(qrcode: qrcode)
+
+        let payload = VP1BUtils.generatePayload(from: vp1b)
+        let signature = try VP1BUtils.generateSignature(from: vp1b)
+        let publicKey = try VP1BUtils.generatePublicKey(from: vp1b)
+
+        let isValid = try Ed25519.verify(
+            payload: payload,
+            signature: signature,
+            publicKey: publicKey
+        )
+
+        // TODO: throw error if signature verification fails
+        print("isValid: \(isValid)")
+
+        return vp1b
+    }
+}
