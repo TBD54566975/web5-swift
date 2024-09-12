@@ -1,9 +1,9 @@
 import Foundation
 
-struct VP1BVerifier {
+public struct VP1BVerifier {
     static let QR_PREFIX = "VP1-B"
 
-    static func verifyQRCode(qrcode: String) throws -> VP1B {
+    public static func verifyQRCode(qrcode: String) throws -> VP1B {
         let vp1b = try VP1B.from(qrcode: qrcode)
 
         let payload = VP1BUtils.generatePayload(from: vp1b)
@@ -22,7 +22,7 @@ struct VP1BVerifier {
         return vp1b
     }
 
-    static func verifyIssuer(credential: VP1BCredential) async throws -> Bool {
+    public static func verifyIssuer(credential: VP1BCredential) async throws -> Bool {
         let issuers = try await VP1BIssuers.fetchIssuers()
         let issuer = try VP1BIssuers.findIssuer(for: credential, in: issuers)
 
