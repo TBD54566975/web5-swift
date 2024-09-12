@@ -21,4 +21,11 @@ struct VP1BVerifier {
 
         return vp1b
     }
+
+    static func verifyIssuer(credential: VP1BCredential) async throws -> Bool {
+        let issuers = try await VP1BIssuers.fetchIssuers()
+        let issuer = try VP1BIssuers.findIssuer(for: credential, in: issuers)
+
+        return try VP1BIssuers.isValidCredentialType(issuer: issuer);
+    }
 }
