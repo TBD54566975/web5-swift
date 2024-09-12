@@ -9,6 +9,10 @@ struct VP1BCredential {
     let subject: VP1BSubject
     let proof: VP1BProof
 
+    static let verifiableCredential = "VerifiableCredential"
+    static let overAgeTokenCredential = "OverAgeTokenCredential"
+    static let types: [String] = [verifiableCredential, overAgeTokenCredential]
+
     static func from(_ cborMap: CBOR) throws -> VP1BCredential {
         return VP1BCredential(
             id: try VP1BUtils.toUUID(cborMap[CBOR.unsignedInt(112)]!),
@@ -28,7 +32,7 @@ struct VP1BCredential {
                 "https://w3id.org/security/suites/ed25519-2020/v1"
             ],
             "id": id,
-            "type": ["VerifiableCredential", "OverAgeTokenCredential"],
+            "type": VP1BCredential.types,
             "issuer": issuer,
             "issuanceDate": ISO8601DateFormatter().string(from: issuance),
             "expirationDate": ISO8601DateFormatter().string(from: expiration),
