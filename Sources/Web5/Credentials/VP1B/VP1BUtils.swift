@@ -34,8 +34,14 @@ struct VP1BUtils {
         _:c14n0 <https://w3id.org/cit#concealedIdToken> "\(concealedIdToken)"^^<https://w3id.org/security#multibase> .
         """
 
+        print("Proof Quads: \(proofQuads)")
+        print("VC Quads: \(vcQuads)")
+
         let proofQuadsHash = sha256(proofQuads)
         let vcQuadsHash = sha256(vcQuads)
+
+        print("Proof Quads Hash: \(proofQuadsHash.map { String(format: "%02x", $0) }.joined())")
+        print("VC Quads Hash: \(vcQuadsHash.map { String(format: "%02x", $0) }.joined())")
 
         return proofQuadsHash + vcQuadsHash
     }
@@ -74,25 +80,13 @@ struct VP1BUtils {
         return try Ed25519.publicKeyFromBytes(Data(publicKeyBytes))
     }
 
-    static func sha256(_ input: String) -> [UInt8] {
-        let data = Data(input.utf8)
-        let hashed = SHA256.hash(data: data)
-        return Array(hashed)
-    }
-
-    private static func formatDate(_ date: Date) -> String {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return formatter.string(from: date)
-    }
-
     static func toUUID(_ data: CBOR) throws -> String {
         guard case let .unsignedInt(type) = data[0], type == 3,
               case let .byteString(bytes) = data[1] else {
             throw Error.invalidCredential
         }
 
-        let uuidString = UUID.from(byteArray: bytes)!.uuidString
+        let uuidString = UUID.from(byteArray: bytes)!.uuidString.lowercased()
         return "urn:uuid:\(uuidString)"
     }
 
@@ -127,10 +121,6 @@ struct VP1BUtils {
         return did
     }
 
-    static func encodeMultibasePublicKey(_ multicodecKeyBytes: [UInt8]) -> String {
-        return "z" + Base58.base58Encode(multicodecKeyBytes)
-    }
-
     static func toMultibase(_ data: CBOR) throws -> String {
         guard case let .byteString(bytes) = data else {
             throw Error.invalidCredential
@@ -149,7 +139,24 @@ struct VP1BUtils {
         guard case let .unsignedInt(value) = data else {
             throw Error.invalidCredential
         }
-        return Int64(value)    }
+        return Int64(value)
+    }
+
+    private static func sha256(_ input: String) -> [UInt8] {
+        let data = Data(input.utf8)
+        let hashed = SHA256.hash(data: data)
+        return Array(hashed)
+    }
+
+    private static func formatDate(_ date: Date) -> String {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter.string(from: date)
+    }
+
+    private static func encodeMultibasePublicKey(_ multicodecKeyBytes: [UInt8]) -> String {
+        return "z" + Base58.base58Encode(multicodecKeyBytes)
+    }
 }
 
 extension UUID {
