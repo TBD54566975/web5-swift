@@ -2,7 +2,7 @@ import Foundation
 import SwiftCBOR
 import Base32
 
-struct VP1B {
+public struct VP1B {
     let credential: VP1BCredential
 
     static let QR_PREFIX = "VP1-B"
