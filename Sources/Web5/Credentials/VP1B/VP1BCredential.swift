@@ -1,7 +1,7 @@
 import Foundation
 import SwiftCBOR
 
-public struct VP1BCredential {
+public struct VP1BCredential : Decodable {
     let id: String
     let issuance: Date
     let expiration: Date

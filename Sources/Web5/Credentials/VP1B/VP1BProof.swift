@@ -1,7 +1,7 @@
 import Foundation
 import SwiftCBOR
 
-struct VP1BProof {
+struct VP1BProof : Decodable {
     let created: Date
     let method: String
     let value: String

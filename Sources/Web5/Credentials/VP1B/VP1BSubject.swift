@@ -1,7 +1,7 @@
 import Foundation
 import SwiftCBOR
 
-struct VP1BSubject {
+struct VP1BSubject : Decodable {
     let concealedIdToken: String
     let overAge: Int64
 
