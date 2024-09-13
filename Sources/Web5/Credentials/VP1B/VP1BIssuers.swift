@@ -1,7 +1,7 @@
 import Foundation
 
-struct VP1BIssuers: Codable {
-    let trustedIssuers: [Issuer]
+public struct VP1BIssuers: Codable {
+    let trustedIssuers: [VP1BIssuer]
 
     static func fetchIssuers() async throws -> VP1BIssuers {
         guard let trustedIssuersEndpoint = URL(string: "https://admin.sandbox.truage.dev/age/issuers") else {
@@ -17,32 +17,19 @@ struct VP1BIssuers: Codable {
         }
     }
 
-    static func findIssuer(for credential: VP1BCredential, in issuers: VP1BIssuers) throws -> Issuer {
-        guard let issuer = issuers.trustedIssuers.first(where: { $0.id == credential.issuer }) else {
+    func findIssuer(credential: VP1BCredential) throws -> VP1BIssuer {
+        guard let issuer = trustedIssuers.first(where: { $0.id == credential.issuer }) else {
             throw Error.issuerNotFound
         }
         return issuer
     }
-
-    static func isValidCredentialType(issuer: Issuer) throws -> Bool {
-        if !issuer.credentialTypes.contains(VP1BCredential.overAgeTokenCredential) {
-            throw Error.invalidCredentialType
-        }
-        return true;
-    }
 }
 
-struct Issuer: Codable {
-    let id: String
-    let name: String
-    let credentialTypes: [String]
-}
 
 extension VP1BIssuers {
     public  enum Error: LocalizedError, Equatable {
         case invalidUrl
         case issuerNotFound
-        case invalidCredentialType
         case networkError(String)
 
         public var errorDescription: String? {
@@ -51,8 +38,6 @@ extension VP1BIssuers {
                 return "Invalid URL: The provided URL is invalid."
             case .issuerNotFound:
                 return "Issuer Not Found: The provided issuer DID was not found in the trusted issuers list"
-            case .invalidCredentialType:
-                return "Invalid Credential Type: OverAgeTokenCredential type missing"
             case let .networkError(reason):
                 return "Network Error: \(reason)"
             }
