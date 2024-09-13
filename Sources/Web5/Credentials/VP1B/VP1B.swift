@@ -37,6 +37,16 @@ public struct VP1B {
         return VP1B(credential: try VP1BCredential.from(vcMap))
     }
 
+    func verify() throws {
+        let payload = VP1BUtils.generatePayload(from: self)
+        let signature = try VP1BUtils.generateSignature(from: self)
+        let publicKey = try VP1BUtils.generatePublicKey(from: self)
+
+        guard try Ed25519.verify(payload: payload, signature: signature, publicKey: publicKey) else {
+            throw Error.invalidSignature
+        }
+    }
+
     func expanded() -> [String: Any] {
         return [
             "@context": "https://www.w3.org/2018/credentials/v1",
@@ -56,6 +66,7 @@ extension VP1B {
         case invalidEncoding
         case invalidCBOR
         case invalidCredential
+        case invalidSignature
 
         public var errorDescription: String? {
             switch self {
@@ -67,6 +78,8 @@ extension VP1B {
                 return "Invalid CBOR: Could not decode CBOR data."
             case .invalidCredential:
                 return "Invalid Credential: Credential data is missing or incorrect."
+            case .invalidSignature:
+                return "Invalid Signature: Signature verification failed"
             }
         }
     }
