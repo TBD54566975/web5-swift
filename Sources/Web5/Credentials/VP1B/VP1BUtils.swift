@@ -5,46 +5,39 @@ import Base58Swift
 import VarInt
 
 struct VP1BUtils {
-
     static func generatePayload(from vp1b: VP1B) -> [UInt8] {
-        let proofCreated = vp1b.credential.proof.created
-        let verificationMethod = vp1b.credential.proof.method
-        let verifiableCredentialId = vp1b.credential.id
-        let expirationDate = vp1b.credential.expiration
-        let issuanceDate = vp1b.credential.issuance
-        let issuer = vp1b.credential.issuer
-        let overAge = vp1b.credential.subject.overAge
-        let concealedIdToken = vp1b.credential.subject.concealedIdToken
+       let proofCreated = formatDate(vp1b.credential.proof.created)
+       let verificationMethod = vp1b.credential.proof.method
+       let verifiableCredentialId = vp1b.credential.id
+       let expirationDate = formatDate(vp1b.credential.expiration)
+       let issuanceDate = formatDate(vp1b.credential.issuance)
+       let issuer = vp1b.credential.issuer
+       let overAge = vp1b.credential.subject.overAge
+       let concealedIdToken = vp1b.credential.subject.concealedIdToken
 
         let proofQuads = """
-        _:c14n0 <http://purl.org/dc/terms/created> "\(formatDate(proofCreated))"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
-        _:c14n0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/security#Ed25519Signature2020> .
-        _:c14n0 <https://w3id.org/security#proofPurpose> <https://w3id.org/security#assertionMethod> .
-        _:c14n0 <https://w3id.org/security#verificationMethod> <\(verificationMethod)> .
+        _:c14n0 <http://purl.org/dc/terms/created> "\(proofCreated)"^^<http://www.w3.org/2001/XMLSchema#dateTime> .\n\
+        _:c14n0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/security#Ed25519Signature2020> .\n\
+        _:c14n0 <https://w3id.org/security#proofPurpose> <https://w3id.org/security#assertionMethod> .\n\
+        _:c14n0 <https://w3id.org/security#verificationMethod> <\(verificationMethod)> .\n
         """
 
         let vcQuads = """
-        <\(verifiableCredentialId)> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/age#OverAgeTokenCredential> .
-        <\(verifiableCredentialId)> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .
-        <\(verifiableCredentialId)> <https://www.w3.org/2018/credentials#credentialSubject> _:c14n0 .
-        <\(verifiableCredentialId)> <https://www.w3.org/2018/credentials#expirationDate> "\(formatDate(expirationDate))"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
-        <\(verifiableCredentialId)> <https://www.w3.org/2018/credentials#issuanceDate> "\(formatDate(issuanceDate))"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
-        <\(verifiableCredentialId)> <https://www.w3.org/2018/credentials#issuer> <\(issuer)> .
-        _:c14n0 <https://w3id.org/age#overAge> "\(overAge)"^^<http://www.w3.org/2001/XMLSchema#positiveInteger> .
-        _:c14n0 <https://w3id.org/cit#concealedIdToken> "\(concealedIdToken)"^^<https://w3id.org/security#multibase> .
+        <\(verifiableCredentialId)> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/age#OverAgeTokenCredential> .\n\
+        <\(verifiableCredentialId)> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n\
+        <\(verifiableCredentialId)> <https://www.w3.org/2018/credentials#credentialSubject> _:c14n0 .\n\
+        <\(verifiableCredentialId)> <https://www.w3.org/2018/credentials#expirationDate> "\(expirationDate)"^^<http://www.w3.org/2001/XMLSchema#dateTime> .\n\
+        <\(verifiableCredentialId)> <https://www.w3.org/2018/credentials#issuanceDate> "\(issuanceDate)"^^<http://www.w3.org/2001/XMLSchema#dateTime> .\n\
+        <\(verifiableCredentialId)> <https://www.w3.org/2018/credentials#issuer> <\(issuer)> .\n\
+        _:c14n0 <https://w3id.org/age#overAge> "\(overAge)"^^<http://www.w3.org/2001/XMLSchema#positiveInteger> .\n\
+        _:c14n0 <https://w3id.org/cit#concealedIdToken> "\(concealedIdToken)"^^<https://w3id.org/security#multibase> .\n
         """
 
-        print("Proof Quads: \(proofQuads)")
-        print("VC Quads: \(vcQuads)")
+       let proofQuadsHash = sha256(proofQuads)
+       let vcQuadsHash = sha256(vcQuads)
 
-        let proofQuadsHash = sha256(proofQuads)
-        let vcQuadsHash = sha256(vcQuads)
-
-        print("Proof Quads Hash: \(proofQuadsHash.map { String(format: "%02x", $0) }.joined())")
-        print("VC Quads Hash: \(vcQuadsHash.map { String(format: "%02x", $0) }.joined())")
-
-        return proofQuadsHash + vcQuadsHash
-    }
+       return proofQuadsHash + vcQuadsHash
+   }
 
     static func generateSignature(from vp1b: VP1B) throws -> Data {
         let proofValue = vp1b.credential.proof.value
@@ -53,6 +46,7 @@ struct VP1BUtils {
         guard let decodedData = Base58.base58Decode(slicedProofValue) else {
             throw Error.signatureGenerationFailed
         }
+
         return Data(decodedData)
     }
 
@@ -64,6 +58,7 @@ struct VP1BUtils {
         }
 
         let fingerprint = String(components[1])
+
         let slicedFingerprint = String(fingerprint.dropFirst())
 
         guard let idBytes = Base58.base58Decode(slicedFingerprint) else {
@@ -143,7 +138,7 @@ struct VP1BUtils {
     }
 
     private static func sha256(_ input: String) -> [UInt8] {
-        let data = Data(input.utf8)
+        let data = input.data(using: .utf8)!
         let hashed = SHA256.hash(data: data)
         return Array(hashed)
     }
