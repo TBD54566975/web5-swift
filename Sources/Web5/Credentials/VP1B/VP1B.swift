@@ -2,10 +2,19 @@ import Foundation
 import SwiftCBOR
 import Base32
 
-public struct VP1B : Decodable {
+public struct VP1B : Decodable, CustomStringConvertible {
     public let credential: VP1BCredential
 
     public static let QR_PREFIX = "VP1-B"
+
+    public var description: String {
+        if let jsonData = try? JSONSerialization.data(withJSONObject: expanded(), options: .prettyPrinted),
+          let jsonString = String(data: jsonData, encoding: .utf8) {
+           return jsonString
+        } else {
+           return "Error converting VP1B data to JSON string."
+        }
+    }
 
     public static func from(qrcode: String) throws -> VP1B {
         guard !qrcode.isEmpty else {
@@ -46,17 +55,13 @@ public struct VP1B : Decodable {
             throw Error.invalidSignature
         }
     }
-
-    public func expanded() -> [String: Any] {
+    
+    func expanded() -> [String: Any] {
         return [
             "@context": "https://www.w3.org/2018/credentials/v1",
             "type": "VerifiablePresentation",
             "verifiableCredential": credential.expanded()
         ]
-    }
-
-    public func type() -> [String] {
-        return ["VerifiablePresentation"]
     }
 }
 

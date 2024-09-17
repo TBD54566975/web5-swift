@@ -1,7 +1,16 @@
 import Foundation
 
-public struct VP1BIssuers: Codable {
+public struct VP1BIssuers: Codable, CustomStringConvertible {
     public let trustedIssuers: [VP1BIssuer]
+
+    public var description: String {
+        if let jsonData = try? JSONSerialization.data(withJSONObject: expanded(), options: .prettyPrinted),
+          let jsonString = String(data: jsonData, encoding: .utf8) {
+           return jsonString
+        } else {
+           return "Error converting VP1BIssuers data to JSON string."
+        }
+    }
 
     public static func fetchIssuers() async throws -> VP1BIssuers {
         guard let trustedIssuersEndpoint = URL(string: "https://admin.sandbox.truage.dev/age/issuers") else {
@@ -22,6 +31,14 @@ public struct VP1BIssuers: Codable {
             throw Error.issuerNotFound
         }
         return issuer
+    }
+
+    func expanded() -> [String: Any] {
+        return [
+            "trustedIssuers": trustedIssuers.map { issuer in
+                return issuer.expanded()
+            }
+        ]
     }
 }
 

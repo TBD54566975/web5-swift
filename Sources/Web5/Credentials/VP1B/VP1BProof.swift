@@ -1,10 +1,19 @@
 import Foundation
 import SwiftCBOR
 
-public struct VP1BProof : Decodable {
+public struct VP1BProof : Decodable, CustomStringConvertible {
     public let created: Date
     public let method: String
     public let value: String
+
+    public var description: String {
+        if let jsonData = try? JSONSerialization.data(withJSONObject: expanded(), options: .prettyPrinted),
+           let jsonString = String(data: jsonData, encoding: .utf8) {
+            return jsonString
+        } else {
+            return "Error converting VP1BProof data to JSON string."
+        }
+    }
 
     public static func from(_ cborMap: CBOR) throws -> VP1BProof {
         return VP1BProof(
@@ -14,7 +23,7 @@ public struct VP1BProof : Decodable {
         )
     }
 
-    public func expanded() -> [String: Any] {
+    func expanded() -> [String: Any] {
         return [
             "type": "Ed25519Signature2020",
             "created": ISO8601DateFormatter().string(from: created),

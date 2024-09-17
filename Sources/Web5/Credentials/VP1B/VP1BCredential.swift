@@ -1,7 +1,7 @@
 import Foundation
 import SwiftCBOR
 
-public struct VP1BCredential : Decodable {
+public struct VP1BCredential : Decodable, CustomStringConvertible {
     public let id: String
     public let issuance: Date
     public let expiration: Date
@@ -13,18 +13,16 @@ public struct VP1BCredential : Decodable {
     static let overAgeTokenCredential = "OverAgeTokenCredential"
     static let types: [String] = [verifiableCredential, overAgeTokenCredential]
 
-    public static func from(_ cborMap: CBOR) throws -> VP1BCredential {
-        return VP1BCredential(
-            id: try VP1BUtils.toUUID(cborMap[CBOR.unsignedInt(112)]!),
-            issuance: try VP1BUtils.toInstant(cborMap[CBOR.unsignedInt(164)]!),
-            expiration: try VP1BUtils.toInstant(cborMap[CBOR.unsignedInt(162)]!),
-            issuer: try VP1BUtils.toDID(cborMap[CBOR.unsignedInt(168)]!),
-            subject: try VP1BSubject.from(cborMap[CBOR.unsignedInt(158)]!),
-            proof: try VP1BProof.from(cborMap[CBOR.unsignedInt(114)]!)
-        )
+    public var description: String {
+        if let jsonData = try? JSONSerialization.data(withJSONObject: expanded(), options: .prettyPrinted),
+           let jsonString = String(data: jsonData, encoding: .utf8) {
+            return jsonString
+        } else {
+            return "Error converting VP1BCredential data to JSON string."
+        }
     }
 
-    public func expanded() -> [String: Any] {
+    func expanded() -> [String: Any] {
         return [
             "@context": [
                 "https://www.w3.org/2018/credentials/v1",
@@ -39,5 +37,16 @@ public struct VP1BCredential : Decodable {
             "credentialSubject": subject.expanded(),
             "proof": proof.expanded()
         ]
+    }
+
+    public static func from(_ cborMap: CBOR) throws -> VP1BCredential {
+        return VP1BCredential(
+            id: try VP1BUtils.toUUID(cborMap[CBOR.unsignedInt(112)]!),
+            issuance: try VP1BUtils.toInstant(cborMap[CBOR.unsignedInt(164)]!),
+            expiration: try VP1BUtils.toInstant(cborMap[CBOR.unsignedInt(162)]!),
+            issuer: try VP1BUtils.toDID(cborMap[CBOR.unsignedInt(168)]!),
+            subject: try VP1BSubject.from(cborMap[CBOR.unsignedInt(158)]!),
+            proof: try VP1BProof.from(cborMap[CBOR.unsignedInt(114)]!)
+        )
     }
 }
