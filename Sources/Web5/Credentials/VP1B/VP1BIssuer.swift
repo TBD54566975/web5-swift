@@ -1,11 +1,11 @@
 import Foundation
 
 public struct VP1BIssuer: Codable {
-    let id: String
-    let name: String
-    let credentialTypes: [String]
+    public let id: String
+    public let name: String
+    public let credentialTypes: [String]
 
-    func verify() throws {
+    public func verify() throws {
         if !credentialTypes.contains(VP1BCredential.overAgeTokenCredential) {
             throw Error.invalidCredentialType
         }

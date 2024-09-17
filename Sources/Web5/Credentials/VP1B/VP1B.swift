@@ -3,11 +3,11 @@ import SwiftCBOR
 import Base32
 
 public struct VP1B : Decodable {
-    let credential: VP1BCredential
+    public let credential: VP1BCredential
 
-    static let QR_PREFIX = "VP1-B"
+    public static let QR_PREFIX = "VP1-B"
 
-    static func from(qrcode: String) throws -> VP1B {
+    public static func from(qrcode: String) throws -> VP1B {
         guard !qrcode.isEmpty else {
             throw Error.invalidInput("The QR code must not be empty.")
         }
@@ -37,7 +37,7 @@ public struct VP1B : Decodable {
         return VP1B(credential: try VP1BCredential.from(vcMap))
     }
 
-    func verify() throws {
+    public func verify() throws {
         let payload = VP1BUtils.generatePayload(from: self)
         let signature = try VP1BUtils.generateSignature(from: self)
         let publicKey = try VP1BUtils.generatePublicKey(from: self)
@@ -47,7 +47,7 @@ public struct VP1B : Decodable {
         }
     }
 
-    func expanded() -> [String: Any] {
+    public func expanded() -> [String: Any] {
         return [
             "@context": "https://www.w3.org/2018/credentials/v1",
             "type": "VerifiablePresentation",
@@ -55,7 +55,7 @@ public struct VP1B : Decodable {
         ]
     }
 
-    func type() -> [String] {
+    public func type() -> [String] {
         return ["VerifiablePresentation"]
     }
 }

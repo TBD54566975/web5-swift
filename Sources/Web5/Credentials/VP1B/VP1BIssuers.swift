@@ -1,9 +1,9 @@
 import Foundation
 
 public struct VP1BIssuers: Codable {
-    let trustedIssuers: [VP1BIssuer]
+    public let trustedIssuers: [VP1BIssuer]
 
-    static func fetchIssuers() async throws -> VP1BIssuers {
+    public static func fetchIssuers() async throws -> VP1BIssuers {
         guard let trustedIssuersEndpoint = URL(string: "https://admin.sandbox.truage.dev/age/issuers") else {
             throw Error.invalidUrl
         }
@@ -17,7 +17,7 @@ public struct VP1BIssuers: Codable {
         }
     }
 
-    func findIssuer(credential: VP1BCredential) throws -> VP1BIssuer {
+    public func findIssuer(credential: VP1BCredential) throws -> VP1BIssuer {
         guard let issuer = trustedIssuers.first(where: { $0.id == credential.issuer }) else {
             throw Error.issuerNotFound
         }

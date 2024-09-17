@@ -1,12 +1,12 @@
 import Foundation
 import SwiftCBOR
 
-struct VP1BProof : Decodable {
-    let created: Date
-    let method: String
-    let value: String
+public struct VP1BProof : Decodable {
+    public let created: Date
+    public let method: String
+    public let value: String
 
-    static func from(_ cborMap: CBOR) throws -> VP1BProof {
+    public static func from(_ cborMap: CBOR) throws -> VP1BProof {
         return VP1BProof(
             created: try VP1BUtils.toInstant(cborMap[CBOR.unsignedInt(182)]!),
             method: try VP1BUtils.toDID(cborMap[CBOR.unsignedInt(194)]!),
@@ -14,7 +14,7 @@ struct VP1BProof : Decodable {
         )
     }
 
-    func expanded() -> [String: Any] {
+    public func expanded() -> [String: Any] {
         return [
             "type": "Ed25519Signature2020",
             "created": ISO8601DateFormatter().string(from: created),

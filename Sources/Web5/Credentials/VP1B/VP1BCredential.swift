@@ -2,18 +2,18 @@ import Foundation
 import SwiftCBOR
 
 public struct VP1BCredential : Decodable {
-    let id: String
-    let issuance: Date
-    let expiration: Date
-    let issuer: String
-    let subject: VP1BSubject
-    let proof: VP1BProof
+    public let id: String
+    public let issuance: Date
+    public let expiration: Date
+    public let issuer: String
+    public let subject: VP1BSubject
+    public let proof: VP1BProof
 
     static let verifiableCredential = "VerifiableCredential"
     static let overAgeTokenCredential = "OverAgeTokenCredential"
     static let types: [String] = [verifiableCredential, overAgeTokenCredential]
 
-    static func from(_ cborMap: CBOR) throws -> VP1BCredential {
+    public static func from(_ cborMap: CBOR) throws -> VP1BCredential {
         return VP1BCredential(
             id: try VP1BUtils.toUUID(cborMap[CBOR.unsignedInt(112)]!),
             issuance: try VP1BUtils.toInstant(cborMap[CBOR.unsignedInt(164)]!),
@@ -24,7 +24,7 @@ public struct VP1BCredential : Decodable {
         )
     }
 
-    func expanded() -> [String: Any] {
+    public func expanded() -> [String: Any] {
         return [
             "@context": [
                 "https://www.w3.org/2018/credentials/v1",
